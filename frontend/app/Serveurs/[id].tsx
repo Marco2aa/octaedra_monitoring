@@ -56,6 +56,16 @@ const ServerDetail: React.FC = () => {
   const [data, setData] = useState<Data[]>([]);
   const font = useFont(require("../../assets/fonts/Poppins-Regular.ttf"), 12);
   const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [period, setPeriod] = useState("24h");
+  const [timeData, setTimeData] = useState<{
+    last24Hours: Data[];
+    lastWeek: Data[];
+    lastMonth: Data[];
+  }>({
+    last24Hours: [],
+    lastWeek: [],
+    lastMonth: [],
+  });
 
   const { state: chartPressState, isActive } = useChartPressState({
     x: "",
@@ -71,6 +81,12 @@ const ServerDetail: React.FC = () => {
   }) {
     return <Circle cx={x} cy={y} r={8} color="black" />;
   }
+
+  const periods = {
+    "24h": 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "1m": 30 * 24 * 60 * 60 * 1000,
+  };
 
   const getPortsByServer = async (id: string) => {
     try {
@@ -170,7 +186,49 @@ const ServerDetail: React.FC = () => {
           x: item[20],
           y: item[6],
         }));
-        setData(formattedData);
+
+        formattedData.sort((a, b) => {
+          const dateA = new Date(a.x);
+          const dateB = new Date(b.x);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+        const currentDate = new Date();
+
+        // Filtrer les données pour obtenir celles des 24 dernières heures
+        const last24HoursData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
+          ); // 24 heures en millisecondes
+        });
+
+        // Filtrer les données pour obtenir celles des 7 derniers jours
+        const lastWeekData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
+          ); // 7 jours en millisecondes
+        });
+
+        // Filtrer les données pour obtenir celles du dernier mois
+        const lastMonthData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() >
+            currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
+          ); // 30 jours en millisecondes
+        });
+
+        setTimeData({
+          last24Hours: last24HoursData,
+          lastWeek: lastWeekData,
+          lastMonth: lastMonthData,
+        });
+
+        console.log("Last 24 hours data:", last24HoursData);
+        console.log("Last week data:", lastWeekData);
+        console.log("Last month data:", lastMonthData);
         console.log("formattedData", formattedData);
       } else {
         console.error("Les données récupérées ne sont pas au format attendu.");
