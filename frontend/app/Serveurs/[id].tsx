@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -16,12 +17,17 @@ import axios from "axios";
 import { useDataContext } from "@/components/DataContext";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { CartesianChart, Line, useChartPressState } from "victory-native";
+import { Bar, CartesianChart, Line, useChartPressState } from "victory-native";
 import { Platform } from "react-native";
 import { useFont } from "@shopify/react-native-skia";
 import { format } from "date-fns";
 import type { SharedValue } from "react-native-reanimated";
+import Animated, { useAnimatedProps } from "react-native-reanimated";
+Animated.addWhitelistedNativeProps({ text: true });
 import { Circle } from "@shopify/react-native-skia";
+import { Button } from "react-native-paper";
+import MyCustomBars from "@/components/CustomBars";
+import MyCustomLine from "@/components/CustomLine";
 
 type Port = {
   id_port: string;
@@ -41,12 +47,15 @@ const DATA = Array.from({ length: 31 }, (_, i) => ({
   highTmp: 40 + 30 * Math.random(),
 }));
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
 const ServerDetail: React.FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
   const { state: dataContextState, dispatch } = useDataContext();
   const [data, setData] = useState<Data[]>([]);
   const font = useFont(require("../../assets/fonts/Poppins-Regular.ttf"), 12);
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
 
   const { state: chartPressState, isActive } = useChartPressState({
     x: "",
@@ -182,6 +191,19 @@ const ServerDetail: React.FC = () => {
     }
   }, [id]);
 
+  const getColorFromY = (points: any) => {
+    return points.map((point: any) => {
+      const yValue = point.yValue;
+      if (yValue > 25) {
+        return "red";
+      } else if (yValue > 20) {
+        return "orange";
+      } else {
+        return "green";
+      }
+    });
+  };
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: `Server Details - ${id}`,
@@ -202,6 +224,13 @@ const ServerDetail: React.FC = () => {
     theme === "dark" ? Colors.dark.background : Colors.light.background;
   const textColor = theme === "dark" ? Colors.dark.text : Colors.light.text;
 
+  const animatedText = useAnimatedProps(() => {
+    return {
+      text: `${chartPressState.y.y.value.value} ms`,
+      defaultValue: "",
+    };
+  });
+
   const formattedDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, "0");
@@ -213,12 +242,31 @@ const ServerDetail: React.FC = () => {
 
     return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
   };
+
   const formattedAxisDate = (dateString: string) => {
     const date = new Date(dateString);
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
 
     return `${hours}:${minutes}`;
+  };
+
+  const animatedDateText = useAnimatedProps(() => {
+    console.log(
+      "chartPressState.x.value.value:",
+      chartPressState.x.value.value
+    );
+    const date = new Date(chartPressState.x.value.value);
+
+    return {
+      text: `${date}`,
+      defaultValue: "",
+    };
+  });
+
+  const chartBounds = {
+    left: data.length > 0 ? new Date(data[0].x).getTime() : 0,
+    bottom: 0,
   };
 
   const renderPortItem = ({ item }: { item: Port }) => (
@@ -272,8 +320,21 @@ const ServerDetail: React.FC = () => {
     <ScrollView style={[styles.mainContainer, { backgroundColor }]}>
       {Platform.OS !== "web" && (
         <View
-          style={{ width: "90%", marginLeft: "5%", height: 500, marginTop: 30 }}
+          style={{
+            width: "90%",
+            marginLeft: "5%",
+            height: 500,
+            marginTop: 30,
+            backgroundColor: Colors.dark.itemcontainer,
+            padding: 10,
+            borderRadius: 8,
+            position: "relative",
+          }}
         >
+          <Button
+            onPress={() => setChartType(chartType === "line" ? "bar" : "line")}
+            style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
+          >{`Switch to ${chartType === "line" ? "Bar" : "Line"} Chart`}</Button>
           {data.length > 0 && (
             <>
               {!isActive && (
@@ -285,7 +346,7 @@ const ServerDetail: React.FC = () => {
                       color: "lightgrey",
                     }}
                   >
-                    Today
+                    {data[data.length - 1].y} ms
                   </Text>
                   <Text
                     style={{
@@ -300,24 +361,26 @@ const ServerDetail: React.FC = () => {
               )}
               {isActive && (
                 <View>
-                  <Text
+                  <AnimatedTextInput
+                    editable={false}
+                    underlineColorAndroid={"transparent"}
                     style={{
                       fontSize: 30,
                       fontWeight: "bold",
                       color: "lightgrey",
                     }}
-                  >
-                    Today
-                  </Text>
-                  <Text
+                    animatedProps={animatedText}
+                  ></AnimatedTextInput>
+                  <AnimatedTextInput
+                    editable={false}
+                    underlineColorAndroid={"transparent"}
                     style={{
                       fontSize: 15,
                       fontWeight: "bold",
                       color: "lightgrey",
                     }}
-                  >
-                    {formattedAxisDate(data[data.length - 1].x)}
-                  </Text>
+                    animatedProps={animatedDateText}
+                  ></AnimatedTextInput>
                 </View>
               )}
               <CartesianChart
@@ -325,16 +388,27 @@ const ServerDetail: React.FC = () => {
                 xKey="x"
                 yKeys={["y"]}
                 axisOptions={{
+                  tickCount: { x: 5, y: 5 },
+
                   font,
                   formatYLabel: (y) => `${y} ms`,
                   formatXLabel: (x) => formattedAxisDate(x),
                   labelColor: "lightgrey",
                 }}
                 chartPressState={chartPressState}
+                domainPadding={20}
               >
-                {({ points }) => (
+                {({ points, chartBounds }) => (
                   <>
-                    <Line points={points.y} color="red" strokeWidth={3} />
+                    {console.log("Points", points.y)}
+                    {chartType === "line" ? (
+                      <MyCustomLine points={points.y} />
+                    ) : (
+                      <MyCustomBars
+                        points={points.y}
+                        chartBounds={chartBounds}
+                      />
+                    )}
                     {isActive && (
                       <ToolTip
                         x={chartPressState.x.position}
@@ -349,7 +423,12 @@ const ServerDetail: React.FC = () => {
         </View>
       )}
       {dataContextState.infoUrl && (
-        <View style={styles.infoContainer}>
+        <View
+          style={[
+            styles.infoContainer,
+            { backgroundColor: Colors.dark.itemcontainer },
+          ]}
+        >
           <Text style={[styles.text, { color: textColor }]}>
             IP Address: {dataContextState.infoUrl.ip_address}
           </Text>
@@ -422,7 +501,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoContainer: {
-    margin: 10,
+    marginTop: 20,
+    width: "90%",
+    marginLeft: "5%",
+    padding: 10,
+    borderRadius: 8,
   },
   infoItem: {
     marginBottom: 5,
@@ -445,6 +528,7 @@ const styles = StyleSheet.create({
   list: {
     paddingBottom: 30,
     marginBottom: 80,
+    marginTop: 15,
   },
   icon: {
     position: "absolute",
