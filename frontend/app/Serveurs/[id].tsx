@@ -5,12 +5,12 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
+  TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { useTheme } from "@/components/ThemeContext";
 import axios from "axios";
@@ -20,14 +20,21 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Bar, CartesianChart, Line, useChartPressState } from "victory-native";
 import { Platform } from "react-native";
 import { useFont } from "@shopify/react-native-skia";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import type { SharedValue } from "react-native-reanimated";
 import Animated, { useAnimatedProps } from "react-native-reanimated";
 Animated.addWhitelistedNativeProps({ text: true });
 import { Circle } from "@shopify/react-native-skia";
-import { Button } from "react-native-paper";
+import { Button, Divider, Menu, Portal } from "react-native-paper";
+import { TextInput as Input } from "react-native-paper";
 import MyCustomBars from "@/components/CustomBars";
 import MyCustomLine from "@/components/CustomLine";
+
+interface DataSets {
+  last24Hours: Data[];
+  lastWeek: Data[];
+  lastMonth: Data[];
+}
 
 type Port = {
   id_port: string;
@@ -42,6 +49,7 @@ type Data = {
   x: string;
   y: number;
 };
+
 const DATA = Array.from({ length: 31 }, (_, i) => ({
   day: i,
   highTmp: 40 + 30 * Math.random(),
@@ -55,12 +63,13 @@ const ServerDetail: React.FC = () => {
   const { state: dataContextState, dispatch } = useDataContext();
   const [data, setData] = useState<Data[]>([]);
   const font = useFont(require("../../assets/fonts/Poppins-Regular.ttf"), 12);
-  const [chartType, setChartType] = useState<"line" | "bar">("line");
-  const [period, setPeriod] = useState("24h");
+  const [chartType, setChartType] = useState<"Line" | "Bar">("Line");
+  const [currentDataset, setCurrentDataset] = useState("last24Hours");
+  const [typeVisible, setTypeVisible] = useState(false);
+  const [periodVisible, setPeriodVisible] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("24Hours");
   const [timeData, setTimeData] = useState<{
-    last24Hours: Data[];
-    lastWeek: Data[];
-    lastMonth: Data[];
+    [key: string]: Data[];
   }>({
     last24Hours: [],
     lastWeek: [],
@@ -81,6 +90,12 @@ const ServerDetail: React.FC = () => {
   }) {
     return <Circle cx={x} cy={y} r={8} color="black" />;
   }
+
+  const openTypeMenu = () => setTypeVisible(true);
+  const closeTypeMenu = () => setTypeVisible(false);
+
+  const openPeriodMenu = () => setPeriodVisible(true);
+  const closePeriodMenu = () => setPeriodVisible(false);
 
   const periods = {
     "24h": 24 * 60 * 60 * 1000,
@@ -195,29 +210,26 @@ const ServerDetail: React.FC = () => {
 
         const currentDate = new Date();
 
-        // Filtrer les données pour obtenir celles des 24 dernières heures
         const last24HoursData = formattedData.filter((item) => {
           const itemDate = new Date(item.x);
           return (
             itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
-          ); // 24 heures en millisecondes
+          );
         });
 
-        // Filtrer les données pour obtenir celles des 7 derniers jours
         const lastWeekData = formattedData.filter((item) => {
           const itemDate = new Date(item.x);
           return (
             itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
-          ); // 7 jours en millisecondes
+          );
         });
 
-        // Filtrer les données pour obtenir celles du dernier mois
         const lastMonthData = formattedData.filter((item) => {
           const itemDate = new Date(item.x);
           return (
             itemDate.getTime() >
             currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
-          ); // 30 jours en millisecondes
+          );
         });
 
         setTimeData({
@@ -225,6 +237,8 @@ const ServerDetail: React.FC = () => {
           lastWeek: lastWeekData,
           lastMonth: lastMonthData,
         });
+
+        setData(formattedData);
 
         console.log("Last 24 hours data:", last24HoursData);
         console.log("Last week data:", lastWeekData);
@@ -248,6 +262,10 @@ const ServerDetail: React.FC = () => {
       getLastItems(id);
     }
   }, [id]);
+
+  const toggleDataset = () => {
+    setCurrentDataset(currentDataset === "24Hours" ? "lastWeek" : "24Hours");
+  };
 
   const getColorFromY = (points: any) => {
     return points.map((point: any) => {
@@ -327,6 +345,28 @@ const ServerDetail: React.FC = () => {
     bottom: 0,
   };
 
+  const handlePeriodChange = (period: string) => {
+    let datasetKey: keyof DataSets;
+    switch (period) {
+      case "24Hours":
+        datasetKey = "last24Hours";
+        break;
+      case "Week":
+        datasetKey = "lastWeek";
+        break;
+      case "Month":
+        datasetKey = "lastMonth";
+        break;
+      default:
+        datasetKey = "last24Hours";
+        break;
+    }
+
+    setSelectedPeriod(period);
+    setCurrentDataset(datasetKey);
+    setPeriodVisible(false);
+  };
+
   const renderPortItem = ({ item }: { item: Port }) => (
     <View
       style={[
@@ -374,6 +414,8 @@ const ServerDetail: React.FC = () => {
     </View>
   );
 
+  const renderDataItem = ({ item }: { item: Data }) => <View>Hello World</View>;
+
   return (
     <ScrollView style={[styles.mainContainer, { backgroundColor }]}>
       {Platform.OS !== "web" && (
@@ -386,13 +428,94 @@ const ServerDetail: React.FC = () => {
             backgroundColor: Colors.dark.itemcontainer,
             padding: 10,
             borderRadius: 8,
-            position: "relative",
           }}
         >
-          <Button
-            onPress={() => setChartType(chartType === "line" ? "bar" : "line")}
-            style={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
-          >{`Switch to ${chartType === "line" ? "Bar" : "Line"} Chart`}</Button>
+          <View
+            style={{
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <Input
+              mode="outlined"
+              label="Chart Type"
+              value={chartType}
+              activeOutlineColor="orange"
+              editable={false}
+              right={
+                <Input.Icon
+                  icon={() => (
+                    <AntDesign
+                      name="caretdown"
+                      size={20}
+                      color="orange"
+                      onPress={openTypeMenu}
+                    />
+                  )}
+                />
+              }
+            />
+            <Portal>
+              <Menu
+                visible={typeVisible}
+                onDismiss={closeTypeMenu}
+                anchor={{ x: 340, y: 0 }}
+                style={{ marginTop: 40 }}
+              >
+                <Menu.Item onPress={() => setChartType("Line")} title="Line" />
+                <Divider />
+                <Menu.Item onPress={() => setChartType("Bar")} title="Bar" />
+                <Divider />
+              </Menu>
+            </Portal>
+            <Input
+              mode="outlined"
+              label="Time period"
+              value={selectedPeriod}
+              activeOutlineColor="orange"
+              editable={false}
+              right={
+                <Input.Icon
+                  icon={() => (
+                    <AntDesign
+                      name="caretdown"
+                      size={20}
+                      color="orange"
+                      onPress={openPeriodMenu}
+                    />
+                  )}
+                />
+              }
+            />
+            <Portal>
+              <Menu
+                visible={periodVisible}
+                onDismiss={closePeriodMenu}
+                anchor={{ x: 340, y: 0 }}
+                style={{ marginTop: 40 }}
+              >
+                <Menu.Item
+                  onPress={() => handlePeriodChange("24Hours")}
+                  title="24 Hours"
+                />
+                <Divider />
+                <Menu.Item
+                  onPress={() => handlePeriodChange("Week")}
+                  title="Week"
+                />
+                <Divider />
+                <Menu.Item
+                  onPress={() => handlePeriodChange("Month")}
+                  title="Month"
+                />
+                <Divider />
+              </Menu>
+            </Portal>
+          </View>
+
           {data.length > 0 && (
             <>
               {!isActive && (
@@ -441,41 +564,117 @@ const ServerDetail: React.FC = () => {
                   ></AnimatedTextInput>
                 </View>
               )}
-              <CartesianChart
-                data={data}
-                xKey="x"
-                yKeys={["y"]}
-                axisOptions={{
-                  tickCount: { x: 5, y: 5 },
+              {selectedPeriod === "24Hours" && (
+                <CartesianChart
+                  data={timeData["last24Hours"]}
+                  xKey="x"
+                  yKeys={["y"]}
+                  axisOptions={{
+                    tickCount: { x: 5, y: 5 },
 
-                  font,
-                  formatYLabel: (y) => `${y} ms`,
-                  formatXLabel: (x) => formattedAxisDate(x),
-                  labelColor: "lightgrey",
-                }}
-                chartPressState={chartPressState}
-                domainPadding={20}
-              >
-                {({ points, chartBounds }) => (
-                  <>
-                    {console.log("Points", points.y)}
-                    {chartType === "line" ? (
-                      <MyCustomLine points={points.y} />
-                    ) : (
-                      <MyCustomBars
-                        points={points.y}
-                        chartBounds={chartBounds}
-                      />
-                    )}
-                    {isActive && (
-                      <ToolTip
-                        x={chartPressState.x.position}
-                        y={chartPressState.y.y.position}
-                      />
-                    )}
-                  </>
-                )}
-              </CartesianChart>
+                    font,
+                    formatYLabel: (y) => `${y} ms`,
+                    formatXLabel: (x) => formattedAxisDate(x),
+                    labelColor: "lightgrey",
+                  }}
+                  chartPressState={chartPressState}
+                  domainPadding={20}
+                >
+                  {({ points, chartBounds }) => (
+                    <>
+                      {console.log("Points", points.y)}
+                      {chartType === "Line" ? (
+                        <MyCustomLine points={points.y} />
+                      ) : (
+                        <MyCustomBars
+                          points={points.y}
+                          chartBounds={chartBounds}
+                        />
+                      )}
+                      {isActive && (
+                        <ToolTip
+                          x={chartPressState.x.position}
+                          y={chartPressState.y.y.position}
+                        />
+                      )}
+                    </>
+                  )}
+                </CartesianChart>
+              )}
+              {selectedPeriod === "Week" && (
+                <CartesianChart
+                  data={timeData["lastWeek"]}
+                  xKey="x"
+                  yKeys={["y"]}
+                  axisOptions={{
+                    tickCount: { x: 5, y: 5 },
+
+                    font,
+                    formatYLabel: (y) => `${y} ms`,
+                    formatXLabel: (x) => formattedAxisDate(x),
+                    labelColor: "lightgrey",
+                  }}
+                  chartPressState={chartPressState}
+                  domainPadding={20}
+                >
+                  {({ points, chartBounds }) => (
+                    <>
+                      {console.log("Points", points.y)}
+                      {chartType === "Line" ? (
+                        <MyCustomLine points={points.y} />
+                      ) : (
+                        <MyCustomBars
+                          points={points.y}
+                          chartBounds={chartBounds}
+                        />
+                      )}
+                      {isActive && (
+                        <ToolTip
+                          x={chartPressState.x.position}
+                          y={chartPressState.y.y.position}
+                        />
+                      )}
+                    </>
+                  )}
+                </CartesianChart>
+              )}
+              {selectedPeriod === "Month" && (
+                <CartesianChart
+                  data={timeData["lastMonth"]}
+                  xKey="x"
+                  yKeys={["y"]}
+                  axisOptions={{
+                    tickCount: { x: 5, y: 5 },
+
+                    font,
+                    formatYLabel: (y) => `${y} ms`,
+                    formatXLabel: (x) => formattedAxisDate(x),
+                    labelColor: "lightgrey",
+                  }}
+                  chartPressState={chartPressState}
+                  domainPadding={20}
+                >
+                  {({ points, chartBounds }) => (
+                    <>
+                      {console.log("Points", points.y)}
+                      {chartType === "Line" ? (
+                        <MyCustomLine points={points.y} />
+                      ) : (
+                        <MyCustomBars
+                          points={points.y}
+                          chartBounds={chartBounds}
+                        />
+                      )}
+                      {isActive && (
+                        <ToolTip
+                          x={chartPressState.x.position}
+                          y={chartPressState.y.y.position}
+                        />
+                      )}
+                    </>
+                  )}
+                </CartesianChart>
+              )}
             </>
           )}
         </View>
@@ -539,6 +738,15 @@ const ServerDetail: React.FC = () => {
           </Text>
         </View>
       )}
+      <View>
+        <FlatList
+          data={dataContextState.ports}
+          keyExtractor={(item) => item.id_port}
+          renderItem={renderPortItem}
+          contentContainerStyle={styles.list}
+          horizontal={true}
+        />
+      </View>
       <View>
         <FlatList
           data={dataContextState.ports}

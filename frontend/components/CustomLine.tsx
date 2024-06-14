@@ -11,14 +11,12 @@ const MyCustomLine: React.FC<MyCustomLineProps> = ({
   points,
   strokeWidth = 3,
 }) => {
-  // Fonction pour obtenir la couleur en fonction de la pente de la ligne
   const getColorFromSlope = (currentY: number, nextY: number) => {
     return nextY > currentY ? "green" : "orange";
   };
 
-  // Créer des segments de ligne avec des couleurs différentes
   const segments = points.map((point, index) => {
-    if (index === points.length - 1) return null; // Ignorer le dernier point car il n'a pas de segment suivant
+    if (index === points.length - 1) return null;
 
     const nextPoint = points[index + 1];
     const segment = [point, nextPoint];
