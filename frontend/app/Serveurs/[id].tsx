@@ -29,6 +29,7 @@ import { Button, Divider, Menu, Portal } from "react-native-paper";
 import { TextInput as Input } from "react-native-paper";
 import MyCustomBars from "@/components/CustomBars";
 import MyCustomLine from "@/components/CustomLine";
+import { useTimer } from "@/components/TimerContext";
 
 interface DataSets {
   last24Hours: Data[];
@@ -67,7 +68,7 @@ const ServerDetail: React.FC = () => {
   const [currentDataset, setCurrentDataset] = useState("last24Hours");
   const [typeVisible, setTypeVisible] = useState(false);
   const [periodVisible, setPeriodVisible] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("24Hours");
+  const [selectedPeriod, setSelectedPeriod] = useState("Week");
   const [timeData, setTimeData] = useState<{
     [key: string]: Data[];
   }>({
@@ -75,6 +76,16 @@ const ServerDetail: React.FC = () => {
     lastWeek: [],
     lastMonth: [],
   });
+  const { timeLeft, resetTimer, onTimerEnd } = useTimer();
+
+  useEffect(() => {
+    const handleTimerEnd = () => {
+      console.log("Le timer est terminé !");
+      addInfoUrl();
+    };
+
+    onTimerEnd(handleTimerEnd);
+  }, [onTimerEnd]);
 
   const { state: chartPressState, isActive } = useChartPressState({
     x: "",
@@ -240,10 +251,10 @@ const ServerDetail: React.FC = () => {
 
         setData(formattedData);
 
+        console.log("formattedData", formattedData);
         console.log("Last 24 hours data:", last24HoursData);
         console.log("Last week data:", lastWeekData);
         console.log("Last month data:", lastMonthData);
-        console.log("formattedData", formattedData);
       } else {
         console.error("Les données récupérées ne sont pas au format attendu.");
       }
@@ -262,23 +273,6 @@ const ServerDetail: React.FC = () => {
       getLastItems(id);
     }
   }, [id]);
-
-  const toggleDataset = () => {
-    setCurrentDataset(currentDataset === "24Hours" ? "lastWeek" : "24Hours");
-  };
-
-  const getColorFromY = (points: any) => {
-    return points.map((point: any) => {
-      const yValue = point.yValue;
-      if (yValue > 25) {
-        return "red";
-      } else if (yValue > 20) {
-        return "orange";
-      } else {
-        return "green";
-      }
-    });
-  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -358,7 +352,7 @@ const ServerDetail: React.FC = () => {
         datasetKey = "lastMonth";
         break;
       default:
-        datasetKey = "last24Hours";
+        datasetKey = "lastWeek";
         break;
     }
 
@@ -414,8 +408,6 @@ const ServerDetail: React.FC = () => {
     </View>
   );
 
-  const renderDataItem = ({ item }: { item: Data }) => <View>Hello World</View>;
-
   return (
     <ScrollView style={[styles.mainContainer, { backgroundColor }]}>
       {Platform.OS !== "web" && (
@@ -439,25 +431,22 @@ const ServerDetail: React.FC = () => {
               gap: 10,
             }}
           >
-            <Input
-              mode="outlined"
-              label="Chart Type"
-              value={chartType}
-              activeOutlineColor="orange"
-              editable={false}
-              right={
-                <Input.Icon
-                  icon={() => (
-                    <AntDesign
-                      name="caretdown"
-                      size={20}
-                      color="orange"
-                      onPress={openTypeMenu}
-                    />
-                  )}
-                />
-              }
-            />
+            <Pressable onPress={openTypeMenu}>
+              <Input
+                mode="outlined"
+                label="Chart Type"
+                value={chartType}
+                activeOutlineColor="orange"
+                editable={false}
+                right={
+                  <Input.Icon
+                    icon={() => (
+                      <AntDesign name="caretdown" size={20} color="orange" />
+                    )}
+                  />
+                }
+              />
+            </Pressable>
             <Portal>
               <Menu
                 visible={typeVisible}
@@ -468,28 +457,24 @@ const ServerDetail: React.FC = () => {
                 <Menu.Item onPress={() => setChartType("Line")} title="Line" />
                 <Divider />
                 <Menu.Item onPress={() => setChartType("Bar")} title="Bar" />
-                <Divider />
               </Menu>
             </Portal>
-            <Input
-              mode="outlined"
-              label="Time period"
-              value={selectedPeriod}
-              activeOutlineColor="orange"
-              editable={false}
-              right={
-                <Input.Icon
-                  icon={() => (
-                    <AntDesign
-                      name="caretdown"
-                      size={20}
-                      color="orange"
-                      onPress={openPeriodMenu}
-                    />
-                  )}
-                />
-              }
-            />
+            <Pressable onPress={openPeriodMenu}>
+              <Input
+                mode="outlined"
+                label="Time period"
+                value={selectedPeriod}
+                activeOutlineColor="orange"
+                editable={false}
+                right={
+                  <Input.Icon
+                    icon={() => (
+                      <AntDesign name="caretdown" size={20} color="orange" />
+                    )}
+                  />
+                }
+              />
+            </Pressable>
             <Portal>
               <Menu
                 visible={periodVisible}
@@ -511,7 +496,6 @@ const ServerDetail: React.FC = () => {
                   onPress={() => handlePeriodChange("Month")}
                   title="Month"
                 />
-                <Divider />
               </Menu>
             </Portal>
           </View>
@@ -565,115 +549,135 @@ const ServerDetail: React.FC = () => {
                 </View>
               )}
               {selectedPeriod === "24Hours" && (
-                <CartesianChart
-                  data={timeData["last24Hours"]}
-                  xKey="x"
-                  yKeys={["y"]}
-                  axisOptions={{
-                    tickCount: { x: 5, y: 5 },
-
-                    font,
-                    formatYLabel: (y) => `${y} ms`,
-                    formatXLabel: (x) => formattedAxisDate(x),
-                    labelColor: "lightgrey",
-                  }}
-                  chartPressState={chartPressState}
-                  domainPadding={20}
-                >
-                  {({ points, chartBounds }) => (
-                    <>
-                      {console.log("Points", points.y)}
-                      {chartType === "Line" ? (
-                        <MyCustomLine points={points.y} />
-                      ) : (
-                        <MyCustomBars
-                          points={points.y}
-                          chartBounds={chartBounds}
-                        />
+                <>
+                  {timeData["last24Hours"] &&
+                  timeData["last24Hours"].length > 0 ? (
+                    <CartesianChart
+                      data={timeData["last24Hours"]}
+                      xKey="x"
+                      yKeys={["y"]}
+                      axisOptions={{
+                        tickCount: { x: 5, y: 5 },
+                        font,
+                        formatYLabel: (y) => `${y} ms`,
+                        formatXLabel: (x) => formattedAxisDate(x),
+                        labelColor: "lightgrey",
+                      }}
+                      chartPressState={chartPressState}
+                      domainPadding={20}
+                    >
+                      {({ points, chartBounds }) => (
+                        <>
+                          {console.log("Points", points.y)}
+                          {chartType === "Line" ? (
+                            <MyCustomLine points={points.y} />
+                          ) : (
+                            <MyCustomBars
+                              points={points.y}
+                              chartBounds={chartBounds}
+                            />
+                          )}
+                          {isActive && (
+                            <ToolTip
+                              x={chartPressState.x.position}
+                              y={chartPressState.y.y.position}
+                            />
+                          )}
+                        </>
                       )}
-                      {isActive && (
-                        <ToolTip
-                          x={chartPressState.x.position}
-                          y={chartPressState.y.y.position}
-                        />
-                      )}
-                    </>
+                    </CartesianChart>
+                  ) : (
+                    <Text>
+                      Aucune donnée disponible pour les dernières 24 heures.
+                    </Text>
                   )}
-                </CartesianChart>
+                </>
               )}
               {selectedPeriod === "Week" && (
-                <CartesianChart
-                  data={timeData["lastWeek"]}
-                  xKey="x"
-                  yKeys={["y"]}
-                  axisOptions={{
-                    tickCount: { x: 5, y: 5 },
-
-                    font,
-                    formatYLabel: (y) => `${y} ms`,
-                    formatXLabel: (x) => formattedAxisDate(x),
-                    labelColor: "lightgrey",
-                  }}
-                  chartPressState={chartPressState}
-                  domainPadding={20}
-                >
-                  {({ points, chartBounds }) => (
-                    <>
-                      {console.log("Points", points.y)}
-                      {chartType === "Line" ? (
-                        <MyCustomLine points={points.y} />
-                      ) : (
-                        <MyCustomBars
-                          points={points.y}
-                          chartBounds={chartBounds}
-                        />
+                <>
+                  {timeData["lastWeek"] && timeData["lastWeek"].length > 0 ? (
+                    <CartesianChart
+                      data={timeData["lastWeek"]}
+                      xKey="x"
+                      yKeys={["y"]}
+                      axisOptions={{
+                        tickCount: { x: 5, y: 5 },
+                        font,
+                        formatYLabel: (y) => `${y} ms`,
+                        formatXLabel: (x) => formattedAxisDate(x),
+                        labelColor: "lightgrey",
+                      }}
+                      chartPressState={chartPressState}
+                      domainPadding={20}
+                    >
+                      {({ points, chartBounds }) => (
+                        <>
+                          {console.log("Points", points.y)}
+                          {chartType === "Line" ? (
+                            <MyCustomLine points={points.y} />
+                          ) : (
+                            <MyCustomBars
+                              points={points.y}
+                              chartBounds={chartBounds}
+                            />
+                          )}
+                          {isActive && (
+                            <ToolTip
+                              x={chartPressState.x.position}
+                              y={chartPressState.y.y.position}
+                            />
+                          )}
+                        </>
                       )}
-                      {isActive && (
-                        <ToolTip
-                          x={chartPressState.x.position}
-                          y={chartPressState.y.y.position}
-                        />
-                      )}
-                    </>
+                    </CartesianChart>
+                  ) : (
+                    <Text>
+                      Aucune donnée disponible pour la semaine dernière.
+                    </Text>
                   )}
-                </CartesianChart>
+                </>
               )}
               {selectedPeriod === "Month" && (
-                <CartesianChart
-                  data={timeData["lastMonth"]}
-                  xKey="x"
-                  yKeys={["y"]}
-                  axisOptions={{
-                    tickCount: { x: 5, y: 5 },
-
-                    font,
-                    formatYLabel: (y) => `${y} ms`,
-                    formatXLabel: (x) => formattedAxisDate(x),
-                    labelColor: "lightgrey",
-                  }}
-                  chartPressState={chartPressState}
-                  domainPadding={20}
-                >
-                  {({ points, chartBounds }) => (
-                    <>
-                      {console.log("Points", points.y)}
-                      {chartType === "Line" ? (
-                        <MyCustomLine points={points.y} />
-                      ) : (
-                        <MyCustomBars
-                          points={points.y}
-                          chartBounds={chartBounds}
-                        />
+                <>
+                  {timeData["lastMonth"] && timeData["lastMonth"].length > 0 ? (
+                    <CartesianChart
+                      data={timeData["lastMonth"]}
+                      xKey="x"
+                      yKeys={["y"]}
+                      axisOptions={{
+                        tickCount: { x: 5, y: 5 },
+                        font,
+                        formatYLabel: (y) => `${y} ms`,
+                        formatXLabel: (x) => formattedAxisDate(x),
+                        labelColor: "lightgrey",
+                      }}
+                      chartPressState={chartPressState}
+                      domainPadding={20}
+                    >
+                      {({ points, chartBounds }) => (
+                        <>
+                          {console.log("Points", points.y)}
+                          {chartType === "Line" ? (
+                            <MyCustomLine points={points.y} />
+                          ) : (
+                            <MyCustomBars
+                              points={points.y}
+                              chartBounds={chartBounds}
+                            />
+                          )}
+                          {isActive && (
+                            <ToolTip
+                              x={chartPressState.x.position}
+                              y={chartPressState.y.y.position}
+                            />
+                          )}
+                        </>
                       )}
-                      {isActive && (
-                        <ToolTip
-                          x={chartPressState.x.position}
-                          y={chartPressState.y.y.position}
-                        />
-                      )}
-                    </>
+                    </CartesianChart>
+                  ) : (
+                    <Text>Aucune donnée disponible pour le mois dernier.</Text>
                   )}
-                </CartesianChart>
+                </>
               )}
             </>
           )}
@@ -738,15 +742,6 @@ const ServerDetail: React.FC = () => {
           </Text>
         </View>
       )}
-      <View>
-        <FlatList
-          data={dataContextState.ports}
-          keyExtractor={(item) => item.id_port}
-          renderItem={renderPortItem}
-          contentContainerStyle={styles.list}
-          horizontal={true}
-        />
-      </View>
       <View>
         <FlatList
           data={dataContextState.ports}
