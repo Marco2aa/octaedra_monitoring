@@ -24,9 +24,6 @@ import axios from "axios";
 import { useTimer } from "@/components/TimerContext";
 
 export default function Tablayout() {
-  const { timeLeft } = useTimer();
-  const { onTimerEnd } = useTimer();
-
   const { formData } = useFormContext();
 
   const navigation = useNavigation<NativeStackNavigatorProps>();
@@ -34,6 +31,29 @@ export default function Tablayout() {
   const handlePresentModalPress = () => bottomSheetRef.current?.present();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const { dismiss } = useBottomSheetModal();
+  const { timeLeft, resetTimer, onTimerEnd } = useTimer();
+
+  useEffect(() => {
+    const handleTimerEnd = () => {
+      console.log("Le timer est terminé !");
+      addAllInfoUrl();
+    };
+
+    const cleanup = onTimerEnd(handleTimerEnd);
+    return cleanup;
+  }, [onTimerEnd]);
+
+  const addAllInfoUrl = async () => {
+    try {
+      const response = await axios.post(
+        "http://192.168.1.94:8000/add-all-infourl"
+      );
+      const data = response.data;
+      console.log(data);
+    } catch (error) {
+      console.error("Error", error);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -242,7 +262,7 @@ export default function Tablayout() {
         />
 
         <Tabs.Screen
-          name="modal"
+          name="notification"
           options={{
             title: "",
             tabBarIcon: ({ focused }) => {

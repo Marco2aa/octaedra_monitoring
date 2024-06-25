@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { Slot, Stack } from "expo-router";
 import { ThemeProvider } from "@/components/ThemeContext";
@@ -9,7 +9,8 @@ import { PaperProvider } from "react-native-paper";
 import { FormProvider } from "@/components/FormProvider";
 import { DataProvider } from "@/components/DataContext";
 import { RootSiblingParent } from "react-native-root-siblings";
-import { TimerProvider } from "@/components/TimerContext";
+import { TimerProvider, useTimer } from "@/components/TimerContext";
+import axios from "axios";
 
 const RootLayout = () => {
   return (

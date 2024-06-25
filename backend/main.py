@@ -43,6 +43,16 @@ app.add_middleware(
     allow_headers=["*"],  
 )
 
+
+expo_tokens = []
+
+class Notification(BaseModel):
+    title: str
+    body: str
+
+class ExpoToken(BaseModel):
+    token: str
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -708,6 +718,67 @@ def add_info_url(url_id: int):
         return {"error": "No database connection"}
     
 
+from datetime import datetime
+from fastapi import HTTPException
+
+@app.post('/add-all-infourl')
+def add_all_info_url():
+    connection = create_connection()
+    if connection:
+        try:
+            cursor = connection.cursor()
+
+            select_query = "SELECT id_url, url, timeout, ipv6, packet_size, protocole FROM url"
+            cursor.execute(select_query)
+            results = cursor.fetchall()
+            if results:
+                for result in results:
+                    url_id = result[0]  
+                    url = result[1]
+                    timeout = result[2]
+                    ipv6 = result[3]
+                    packet_size = result[4]
+                    protocol = result[5]
+
+                    print(f"Values retrieved from DB - URL: {url}, Timeout: {timeout}, IPv6: {ipv6}, Packet Size: {packet_size}, Protocol: {protocol}, ID: {url_id}")
+                    
+                    info = gather_info(url, url_id, ipv6, protocol, 4, timeout, packet_size)
+                    info.avg_latency = handle_inf(info.avg_latency)
+                    info.min_latency = handle_inf(info.min_latency)
+                    info.max_latency = handle_inf(info.max_latency)
+                    
+                    insert_query = """
+                    INSERT INTO infourl (
+                        url_id, packets_sent, packets_received, packets_lost, packets_loss, 
+                        avg_latency, min_latency, max_latency, packet_sizes, icmp_version, 
+                        ip_address, ttl, dns_resolution_time, ssl_issuer, ssl_issued_on, 
+                        serial_number, domain_creation_date, domain_expiration_date, server_version, updatedAt
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """
+                    cursor.execute(insert_query, (
+                        info.url_id, info.packets_sent, info.packets_received, info.packets_lost, info.packets_loss,
+                        info.avg_latency, info.min_latency, info.max_latency, info.packet_sizes, info.icmp_version,
+                        info.ip_address, info.ttl, info.dns_resolution_time, info.ssl_issuer, info.ssl_issued_on,
+                        info.serial_number, info.domain_creation_date, info.domain_expiration_date, info.server_version, info.updatedAt,
+                    ))
+                
+                connection.commit()
+                return {"message": "Data inserted successfully for all URLs"}
+            else:
+                return {"error": "No records found in the database"}
+        except Exception as e:
+            print(f"Exception: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            cursor.close()
+            connection.close()
+    else:
+        print("No database connection")
+        raise HTTPException(status_code=500, detail="No database connection")
+
+    
+    
+
 @app.post('/add-codehttp/{url_id}')
 def add_code_http(codehttp: CodeHttp, url_id: int):
     connection = create_connection()
@@ -1267,6 +1338,38 @@ def get_server_version(url):
             return "Version du serveur non disponible"
     except requests.exceptions.RequestException as e:
         return f"Erreur lors de la récupération des en-têtes HTTP : {e}"
+    
+
+
+@app.post("/register-token")
+def register_token(expoToken: ExpoToken):
+    if expoToken.token not in expo_tokens:
+        expo_tokens.append(expoToken.token)
+    return {"message": "Token enregistré avec succès"}
+
+
+
+def send_push_message(token, title, body):
+    url = 'https://exp.host/--/api/v2/push/send'
+    headers = {
+        'Accept': 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        'to': token,
+        'sound': 'default',
+        'title': title,
+        'body': body
+    }
+    response = requests.post(url, headers=headers, json=data)
+    print(response.json())
+
+@app.post("/send-notification")
+def send_notification(notification: Notification):
+    for expo_token in expo_tokens:
+        send_push_message(expo_token, notification.title, notification.body)
+    return {"message": "Notifications envoyées avec succès"}
 
 url = "https://corsicalinea.octaedra.com"
 server_version = get_server_version(url)

@@ -32,6 +32,7 @@ import BottomSheet, {
 import { Swipeable } from "react-native-gesture-handler";
 import { ProgressBar, MD3Colors, Chip } from "react-native-paper";
 import { useDataContext } from "@/components/DataContext";
+import { useTimer } from "@/components/TimerContext";
 
 const Index = () => {
   type Server = {

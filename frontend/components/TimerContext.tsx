@@ -1,4 +1,3 @@
-// TimerContext.tsx
 import React, {
   createContext,
   useContext,
@@ -7,10 +6,11 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TIMER_KEY = "TIMER_KEY";
-const INITIAL_TIME = 15 * 60;
+const INITIAL_TIME = 60;
 
 interface TimerContextType {
   timeLeft: number;
@@ -25,6 +25,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState<number>(INITIAL_TIME);
   const timerEndCallbacks = useRef<(() => void)[]>([]);
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     const loadTimer = async () => {
@@ -49,6 +50,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
       setTimeLeft((prevTimeLeft) => {
         const newTimeLeft = prevTimeLeft > 0 ? prevTimeLeft - 1 : 0;
         if (newTimeLeft === 0) {
+          console.log("Timer reached zero, executing callbacks");
           timerEndCallbacks.current.forEach((callback) => callback());
           setTimeLeft(INITIAL_TIME);
         }
@@ -58,6 +60,41 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
     }, 1000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        const loadTimer = async () => {
+          try {
+            const storedTime = await AsyncStorage.getItem(TIMER_KEY);
+            if (storedTime !== null) {
+              const currentTime = Math.floor(Date.now() / 1000);
+              const savedTime = JSON.parse(storedTime);
+              const elapsed = currentTime - savedTime.timestamp;
+              const remainingTime = savedTime.timeLeft - elapsed;
+              setTimeLeft(remainingTime > 0 ? remainingTime : INITIAL_TIME);
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        loadTimer();
+      }
+      appState.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const saveTimer = async (timeLeft: number) => {
@@ -78,7 +115,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const onTimerEnd = useCallback((callback: () => void) => {
+    console.log("Registering timer end callback");
     timerEndCallbacks.current.push(callback);
+    return () => {
+      console.log("Cleaning up timer end callback");
+      timerEndCallbacks.current = timerEndCallbacks.current.filter(
+        (cb) => cb !== callback
+      );
+    };
   }, []);
 
   return (

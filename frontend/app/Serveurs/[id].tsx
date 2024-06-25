@@ -84,7 +84,8 @@ const ServerDetail: React.FC = () => {
       addInfoUrl();
     };
 
-    onTimerEnd(handleTimerEnd);
+    const cleanup = onTimerEnd(handleTimerEnd);
+    return cleanup;
   }, [onTimerEnd]);
 
   const { state: chartPressState, isActive } = useChartPressState({
@@ -272,7 +273,7 @@ const ServerDetail: React.FC = () => {
       getInfoByUrl(id);
       getLastItems(id);
     }
-  }, [id]);
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -568,7 +569,6 @@ const ServerDetail: React.FC = () => {
                     >
                       {({ points, chartBounds }) => (
                         <>
-                          {console.log("Points", points.y)}
                           {chartType === "Line" ? (
                             <MyCustomLine points={points.y} />
                           ) : (
@@ -612,7 +612,6 @@ const ServerDetail: React.FC = () => {
                     >
                       {({ points, chartBounds }) => (
                         <>
-                          {console.log("Points", points.y)}
                           {chartType === "Line" ? (
                             <MyCustomLine points={points.y} />
                           ) : (
@@ -656,7 +655,6 @@ const ServerDetail: React.FC = () => {
                     >
                       {({ points, chartBounds }) => (
                         <>
-                          {console.log("Points", points.y)}
                           {chartType === "Line" ? (
                             <MyCustomLine points={points.y} />
                           ) : (
