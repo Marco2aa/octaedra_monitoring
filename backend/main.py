@@ -666,6 +666,25 @@ def add_info_url(url_id: int):
         try:
             cursor = connection.cursor()
 
+            count_query = "SELECT COUNT(*) FROM infourl WHERE url_id = %s"
+            cursor.execute(count_query,(url_id,))
+            row_count = cursor.fetchone()[0]
+            print(f"Number of rows in infourl: {row_count}")
+
+            # Si le nombre de lignes est supérieur à 300, je supprime la plus ancienne
+            if row_count > 300:
+                delete_query = """
+                DELETE FROM infourl
+                WHERE id = (
+                    SELECT id FROM infourl
+                    ORDER BY updatedAt ASC
+                    LIMIT 1
+                )
+                """
+                cursor.execute(delete_query)
+                connection.commit()
+                print("Deleted the oldest entry from infourl")
+
             select_query = "SELECT url, timeout, ipv6, packet_size, protocole FROM url WHERE id_url = %s"
             cursor.execute(select_query, (url_id,))
             result = cursor.fetchone()

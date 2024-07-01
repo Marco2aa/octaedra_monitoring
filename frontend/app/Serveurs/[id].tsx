@@ -195,6 +195,156 @@ const ServerDetail: React.FC = () => {
     }
   };
 
+  // const getLastItems = async (id: string) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `http://192.168.1.94:8000/get-last-250/${id}`
+  //     );
+  //     console.log("Last items response:", response.data);
+  //     dispatch({ type: "SET_LAST_ITEMS", payload: response.data });
+
+  //     let dataArray = response.data;
+  //     if (!Array.isArray(dataArray)) {
+  //       dataArray = dataArray.data;
+  //     }
+
+  //     if (Array.isArray(dataArray)) {
+  //       const formattedData: Data[] = dataArray.map((item) => ({
+  //         x: item[20],
+  //         y: item[6],
+  //       }));
+
+  //       formattedData.sort((a, b) => {
+  //         const dateA = new Date(a.x);
+  //         const dateB = new Date(b.x);
+  //         return dateA.getTime() - dateB.getTime();
+  //       });
+
+  //       const currentDate = new Date();
+
+  //       const last24HoursData = formattedData.filter((item) => {
+  //         const itemDate = new Date(item.x);
+  //         return (
+  //           itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
+  //         );
+  //       });
+
+  //       const lastWeekData = formattedData.filter((item) => {
+  //         const itemDate = new Date(item.x);
+  //         return (
+  //           itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
+  //         );
+  //       });
+
+  //       const lastMonthData = formattedData.filter((item) => {
+  //         const itemDate = new Date(item.x);
+  //         return (
+  //           itemDate.getTime() >
+  //           currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
+  //         );
+  //       });
+
+  //       setTimeData({
+  //         last24Hours: last24HoursData,
+  //         lastWeek: lastWeekData,
+  //         lastMonth: lastMonthData,
+  //       });
+
+  //       setData(formattedData);
+
+  //       console.log("formattedData", formattedData);
+  //       console.log("Last 24 hours data:", last24HoursData);
+  //       console.log("Last week data:", lastWeekData);
+  //       console.log("Last month data:", lastMonthData);
+  //     } else {
+  //       console.error("Les données récupérées ne sont pas au format attendu.");
+  //     }
+  //   } catch (error) {
+  //     console.error(
+  //       "Erreur lors de la récupération des derniers éléments",
+  //       error
+  //     );
+  //   }
+  // };
+
+  const filterDataByHourIntervals = (
+    data: Data[],
+    interval: number,
+    currentDate: Date
+  ): Data[] => {
+    const filteredData: Data[] = [];
+    const intervalInMillis = interval * 60 * 60 * 1000;
+    const startTime = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+
+    for (let i = 0; i < 24; i += interval) {
+      const startDate = new Date(startTime.getTime() + i * 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() + intervalInMillis);
+
+      const intervalData = data.find((item) => {
+        const itemDate = new Date(item.x);
+        return itemDate >= startDate && itemDate < endDate;
+      });
+
+      if (intervalData) {
+        filteredData.push(intervalData);
+      }
+    }
+
+    return filteredData;
+  };
+
+  // Function to filter data by 6-hour intervals over the last week
+  const filterDataBySixHourIntervals = (
+    data: Data[],
+    currentDate: Date
+  ): Data[] => {
+    const filteredData: Data[] = [];
+    const intervalInMillis = 6 * 60 * 60 * 1000;
+    const startTime = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    for (let i = 0; i < 7 * 24; i += 6) {
+      const startDate = new Date(startTime.getTime() + i * 60 * 60 * 1000);
+      const endDate = new Date(startDate.getTime() + intervalInMillis);
+
+      const intervalData = data.find((item) => {
+        const itemDate = new Date(item.x);
+        return itemDate >= startDate && itemDate < endDate;
+      });
+
+      if (intervalData) {
+        filteredData.push(intervalData);
+      }
+    }
+
+    return filteredData;
+  };
+
+  // Function to filter data by day intervals over the last month
+  const filterDataByDayIntervals = (
+    data: Data[],
+    currentDate: Date
+  ): Data[] => {
+    const filteredData: Data[] = [];
+    const dayInMillis = 24 * 60 * 60 * 1000;
+    const startTime = new Date(currentDate.getTime() - 30 * dayInMillis);
+
+    for (let i = 0; i < 30; i++) {
+      const startDate = new Date(startTime.getTime() + i * dayInMillis);
+      const endDate = new Date(startDate.getTime() + dayInMillis);
+
+      const intervalData = data.find((item) => {
+        const itemDate = new Date(item.x);
+        return itemDate >= startDate && itemDate < endDate;
+      });
+
+      if (intervalData) {
+        filteredData.push(intervalData);
+      }
+    }
+
+    return filteredData;
+  };
+
   const getLastItems = async (id: string) => {
     try {
       const response = await axios.get(
@@ -222,27 +372,19 @@ const ServerDetail: React.FC = () => {
 
         const currentDate = new Date();
 
-        const last24HoursData = formattedData.filter((item) => {
-          const itemDate = new Date(item.x);
-          return (
-            itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
-          );
-        });
-
-        const lastWeekData = formattedData.filter((item) => {
-          const itemDate = new Date(item.x);
-          return (
-            itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
-          );
-        });
-
-        const lastMonthData = formattedData.filter((item) => {
-          const itemDate = new Date(item.x);
-          return (
-            itemDate.getTime() >
-            currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
-          );
-        });
+        const last24HoursData = filterDataByHourIntervals(
+          formattedData,
+          1,
+          currentDate
+        );
+        const lastWeekData = filterDataBySixHourIntervals(
+          formattedData,
+          currentDate
+        );
+        const lastMonthData = filterDataByDayIntervals(
+          formattedData,
+          currentDate
+        );
 
         setTimeData({
           last24Hours: last24HoursData,
