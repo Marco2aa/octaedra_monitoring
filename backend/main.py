@@ -128,6 +128,7 @@ class InfoUrl(BaseModel):
     domain_expiration_date: Optional[datetime] = None
     server_version: Optional[str] = "Unknown"
     updatedAt: datetime
+    ssl_expiration_date: datetime
 
 
 
@@ -247,7 +248,9 @@ async def get_infourl_by_id(url_id: int):
                     "serial_number": info_url[16],
                     "domain_creation_date":info_url[17],
                     "domain_expiration_date": info_url[18],
-                    "server_version": info_url[19]
+                    "server_version": info_url[19],
+                    "updatedAt": info_url[20],
+                    "ssl_expiration_date":info_url[21]
                 }
             else:
                 return {"message": f"No info found for url_id {url_id}"}
@@ -648,7 +651,8 @@ def gather_info(host, url_id, ipv6, protocole, count=4, timeout=1, packet_size=6
         domain_creation_date=datetime.strptime(domain_info["creation_date"], "%d-%m-%Y %H:%M:%S") if domain_info.get("creation_date") else None,
         domain_expiration_date=datetime.strptime(domain_info["expiration_date"], "%d-%m-%Y %H:%M:%S") if domain_info.get("expiration_date") else None,
         server_version=server_version,
-        updatedAt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        updatedAt = datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        ssl_expiration_date=datetime.strptime(certificate_info["expires_on"], "%d-%m-%Y %H:%M:%S") if certificate_info.get("expires_on") else None,
     )
     
     print(f"InfoUrl object created: {info_url}")
@@ -712,14 +716,14 @@ def add_info_url(url_id: int):
                     url_id, packets_sent, packets_received, packets_lost, packets_loss, 
                     avg_latency, min_latency, max_latency, packet_sizes, icmp_version, 
                     ip_address, ttl, dns_resolution_time, ssl_issuer, ssl_issued_on, 
-                    serial_number, domain_creation_date, domain_expiration_date, server_version, updatedAt
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    serial_number, domain_creation_date, domain_expiration_date, server_version, updatedAt, ssl_expiration_date
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """
                 cursor.execute(insert_query, (
                     info.url_id, info.packets_sent, info.packets_received, info.packets_lost, info.packets_loss,
                     info.avg_latency, info.min_latency, info.max_latency, info.packet_sizes, info.icmp_version,
                     info.ip_address, info.ttl, info.dns_resolution_time, info.ssl_issuer, info.ssl_issued_on,
-                    info.serial_number, info.domain_creation_date, info.domain_expiration_date, info.server_version,info.updatedAt,
+                    info.serial_number, info.domain_creation_date, info.domain_expiration_date, info.server_version,info.updatedAt,info.ssl_expiration_date
                 ))
                 connection.commit()
 
@@ -771,14 +775,14 @@ def add_all_info_url():
                         url_id, packets_sent, packets_received, packets_lost, packets_loss, 
                         avg_latency, min_latency, max_latency, packet_sizes, icmp_version, 
                         ip_address, ttl, dns_resolution_time, ssl_issuer, ssl_issued_on, 
-                        serial_number, domain_creation_date, domain_expiration_date, server_version, updatedAt
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        serial_number, domain_creation_date, domain_expiration_date, server_version, updatedAt,ssl_expiration_date
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s)
                     """
                     cursor.execute(insert_query, (
                         info.url_id, info.packets_sent, info.packets_received, info.packets_lost, info.packets_loss,
                         info.avg_latency, info.min_latency, info.max_latency, info.packet_sizes, info.icmp_version,
                         info.ip_address, info.ttl, info.dns_resolution_time, info.ssl_issuer, info.ssl_issued_on,
-                        info.serial_number, info.domain_creation_date, info.domain_expiration_date, info.server_version, info.updatedAt,
+                        info.serial_number, info.domain_creation_date, info.domain_expiration_date, info.server_version, info.updatedAt,info.ssl_expiration_date
                     ))
                 
                 connection.commit()

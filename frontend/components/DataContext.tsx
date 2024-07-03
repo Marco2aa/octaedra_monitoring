@@ -31,6 +31,7 @@ type InfoUrl = {
   ttl: string;
   url_id: number;
   updatedAt: string;
+  ssl_expiration_date: string | null;
 };
 
 type State = {

@@ -31,17 +31,41 @@ export default function Tablayout() {
   const handlePresentModalPress = () => bottomSheetRef.current?.present();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const { dismiss } = useBottomSheetModal();
-  const { timeLeft, resetTimer, onTimerEnd } = useTimer();
+  const [timeLeft, setTimeLeft] = useState({ minutes: 0, seconds: 0 });
+
+  const fetchTimeUntilNextQuarterHour = async () => {
+    try {
+      const response = await axios.get(
+        "http://13.38.9.138:8000/next-quarter-hour"
+      );
+      setTimeLeft(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    const handleTimerEnd = () => {
-      console.log("Le timer est terminé !");
-      addAllInfoUrl();
-    };
+    // Fetch the initial time
+    fetchTimeUntilNextQuarterHour();
 
-    const cleanup = onTimerEnd(handleTimerEnd);
-    return cleanup;
-  }, [onTimerEnd]);
+    // Update the time every second
+    const timerId = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime.seconds > 0) {
+          return { ...prevTime, seconds: prevTime.seconds - 1 };
+        } else if (prevTime.minutes > 0) {
+          return { minutes: prevTime.minutes - 1, seconds: 59 };
+        } else {
+          // When the timer reaches zero, fetch new time
+          fetchTimeUntilNextQuarterHour();
+          return { minutes: 0, seconds: 0 };
+        }
+      });
+    }, 1000);
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(timerId);
+  }, []);
 
   const addAllInfoUrl = async () => {
     try {
@@ -54,20 +78,6 @@ export default function Tablayout() {
       console.error("Error", error);
     }
   };
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
-  };
-
-  useEffect(() => {
-    const handleTimerEnd = () => {
-      console.log("Timer reached 0");
-    };
-
-    onTimerEnd(handleTimerEnd);
-  }, [onTimerEnd]);
 
   const submitFormData = async () => {
     let url_id: number;
@@ -253,7 +263,11 @@ export default function Tablayout() {
                       bottom: -35,
                     }}
                   >
-                    {formatTime(timeLeft)}
+                    {`${timeLeft.minutes
+                      .toString()
+                      .padStart(2, "0")}:${timeLeft.seconds
+                      .toString()
+                      .padStart(2, "0")}`}
                   </Text>
                 </View>
               );

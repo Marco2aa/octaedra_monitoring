@@ -62,6 +62,18 @@ const Index = () => {
       avg_latency: number;
     };
   }>({});
+  const [timeLeft, setTimeLeft] = useState({ minutes: 0, seconds: 0 });
+
+  const fetchTimeUntilNextQuarterHour = async () => {
+    try {
+      const response = await axios.get(
+        "http://13.38.9.138:8000/next-quarter-hour"
+      );
+      setTimeLeft(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -234,6 +246,29 @@ const Index = () => {
     }
   };
 
+  useEffect(() => {
+    // Fetch the initial time
+    fetchTimeUntilNextQuarterHour();
+
+    // Update the time every second
+    const timerId = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime.seconds > 0) {
+          return { ...prevTime, seconds: prevTime.seconds - 1 };
+        } else if (prevTime.minutes > 0) {
+          return { minutes: prevTime.minutes - 1, seconds: 59 };
+        } else {
+          // When the timer reaches zero, fetch new time
+          fetchTimeUntilNextQuarterHour();
+          return { minutes: 0, seconds: 0 };
+        }
+      });
+    }, 1000);
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(timerId);
+  }, []);
+
   const renderRightActions = (id: number) => (
     <View style={styles.rightActions}>
       <TouchableOpacity
@@ -295,8 +330,9 @@ const Index = () => {
                     flexDirection: "row",
                     gap: 13,
                     alignItems: "center",
-                    justifyContent: "flex-start",
+                    justifyContent: "space-between",
                     width: "100%",
+                    position: "relative",
                   }}
                 >
                   <Text
@@ -308,19 +344,25 @@ const Index = () => {
                     {item.nom}
                   </Text>
                   <View style={{ position: "absolute", right: 40 }}>
-                    <Chip
-                      mode="outlined"
-                      style={{
-                        backgroundColor:
-                          serverDataMap[item.id]?.packetLoss === 0
-                            ? "green"
-                            : "red",
-                      }}
-                    >
-                      {serverDataMap[item.id]?.packetLoss === 0
-                        ? "En ligne"
-                        : "Hors ligne"}
-                    </Chip>
+                    {serverDataMap[item.id]?.packetLoss === 0 ? (
+                      <Chip
+                        mode="outlined"
+                        style={{ backgroundColor: "green" }}
+                      >
+                        Online
+                      </Chip>
+                    ) : (
+                      <View
+                        style={{ position: "absolute", right: -125, top: -15 }}
+                      >
+                        <Chip
+                          mode="outlined"
+                          style={{ backgroundColor: "red" }}
+                        >
+                          Offline
+                        </Chip>
+                      </View>
+                    )}
                   </View>
                 </View>
                 <View
@@ -390,7 +432,7 @@ const Index = () => {
                 </View>
                 <Text style={[styles.text, { color: textColor }]}>
                   {portsMap[item.id] === 0
-                    ? "Restez appuyer pour scanner les ports"
+                    ? "Appui long pour scanner"
                     : `Nombre de ports scannés : ${portsMap[item.id]}`}
                 </Text>
                 {loadingMap[item.id] && (

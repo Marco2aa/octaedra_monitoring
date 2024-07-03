@@ -19,6 +19,7 @@ const MyCustomLine: React.FC<MyCustomLineProps> = ({
     if (index === points.length - 1) return null;
 
     const nextPoint = points[index + 1];
+
     const segment = [point, nextPoint];
     const color = getColorFromSlope(
       point.yValue as number,

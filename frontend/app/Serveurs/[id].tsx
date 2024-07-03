@@ -32,9 +32,13 @@ import MyCustomLine from "@/components/CustomLine";
 import { useTimer } from "@/components/TimerContext";
 
 interface DataSets {
-  last24Hours: Data[];
+  last24Hours: [];
   lastWeek: Data[];
   lastMonth: Data[];
+}
+
+interface GroupedData {
+  [interval: number]: number[];
 }
 
 type Port = {
@@ -49,6 +53,11 @@ type Port = {
 type Data = {
   x: string;
   y: number;
+};
+
+type HourlyData = {
+  x: string; // heure formatée pour le graphique
+  y: number; // ping moyen pour cette heure
 };
 
 const DATA = Array.from({ length: 31 }, (_, i) => ({
@@ -76,17 +85,6 @@ const ServerDetail: React.FC = () => {
     lastWeek: [],
     lastMonth: [],
   });
-  const { timeLeft, resetTimer, onTimerEnd } = useTimer();
-
-  useEffect(() => {
-    const handleTimerEnd = () => {
-      console.log("Le timer est terminé !");
-      addInfoUrl();
-    };
-
-    const cleanup = onTimerEnd(handleTimerEnd);
-    return cleanup;
-  }, [onTimerEnd]);
 
   const { state: chartPressState, isActive } = useChartPressState({
     x: "",
@@ -108,12 +106,6 @@ const ServerDetail: React.FC = () => {
 
   const openPeriodMenu = () => setPeriodVisible(true);
   const closePeriodMenu = () => setPeriodVisible(false);
-
-  const periods = {
-    "24h": 24 * 60 * 60 * 1000,
-    "7d": 7 * 24 * 60 * 60 * 1000,
-    "1m": 30 * 24 * 60 * 60 * 1000,
-  };
 
   const getPortsByServer = async (id: string) => {
     try {
@@ -178,6 +170,7 @@ const ServerDetail: React.FC = () => {
         payload: { serverId: id, ipAddress: response.data.ip_address },
       });
       console.log(id, response.data.ip_adress);
+      console.log("datacontext", dataContextState);
       console.log(dataContextState.serversIPs[id]);
     } catch (error) {
       console.error("Erreur lors de la récuperation des infos serveurs", error);
@@ -193,156 +186,6 @@ const ServerDetail: React.FC = () => {
     } catch (error) {
       console.error("Erreur lors de la récuperation des infos serveurs", error);
     }
-  };
-
-  // const getLastItems = async (id: string) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://192.168.1.94:8000/get-last-250/${id}`
-  //     );
-  //     console.log("Last items response:", response.data);
-  //     dispatch({ type: "SET_LAST_ITEMS", payload: response.data });
-
-  //     let dataArray = response.data;
-  //     if (!Array.isArray(dataArray)) {
-  //       dataArray = dataArray.data;
-  //     }
-
-  //     if (Array.isArray(dataArray)) {
-  //       const formattedData: Data[] = dataArray.map((item) => ({
-  //         x: item[20],
-  //         y: item[6],
-  //       }));
-
-  //       formattedData.sort((a, b) => {
-  //         const dateA = new Date(a.x);
-  //         const dateB = new Date(b.x);
-  //         return dateA.getTime() - dateB.getTime();
-  //       });
-
-  //       const currentDate = new Date();
-
-  //       const last24HoursData = formattedData.filter((item) => {
-  //         const itemDate = new Date(item.x);
-  //         return (
-  //           itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
-  //         );
-  //       });
-
-  //       const lastWeekData = formattedData.filter((item) => {
-  //         const itemDate = new Date(item.x);
-  //         return (
-  //           itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
-  //         );
-  //       });
-
-  //       const lastMonthData = formattedData.filter((item) => {
-  //         const itemDate = new Date(item.x);
-  //         return (
-  //           itemDate.getTime() >
-  //           currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
-  //         );
-  //       });
-
-  //       setTimeData({
-  //         last24Hours: last24HoursData,
-  //         lastWeek: lastWeekData,
-  //         lastMonth: lastMonthData,
-  //       });
-
-  //       setData(formattedData);
-
-  //       console.log("formattedData", formattedData);
-  //       console.log("Last 24 hours data:", last24HoursData);
-  //       console.log("Last week data:", lastWeekData);
-  //       console.log("Last month data:", lastMonthData);
-  //     } else {
-  //       console.error("Les données récupérées ne sont pas au format attendu.");
-  //     }
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de la récupération des derniers éléments",
-  //       error
-  //     );
-  //   }
-  // };
-
-  const filterDataByHourIntervals = (
-    data: Data[],
-    interval: number,
-    currentDate: Date
-  ): Data[] => {
-    const filteredData: Data[] = [];
-    const intervalInMillis = interval * 60 * 60 * 1000;
-    const startTime = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
-
-    for (let i = 0; i < 24; i += interval) {
-      const startDate = new Date(startTime.getTime() + i * 60 * 60 * 1000);
-      const endDate = new Date(startDate.getTime() + intervalInMillis);
-
-      const intervalData = data.find((item) => {
-        const itemDate = new Date(item.x);
-        return itemDate >= startDate && itemDate < endDate;
-      });
-
-      if (intervalData) {
-        filteredData.push(intervalData);
-      }
-    }
-
-    return filteredData;
-  };
-
-  // Function to filter data by 6-hour intervals over the last week
-  const filterDataBySixHourIntervals = (
-    data: Data[],
-    currentDate: Date
-  ): Data[] => {
-    const filteredData: Data[] = [];
-    const intervalInMillis = 6 * 60 * 60 * 1000;
-    const startTime = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    for (let i = 0; i < 7 * 24; i += 6) {
-      const startDate = new Date(startTime.getTime() + i * 60 * 60 * 1000);
-      const endDate = new Date(startDate.getTime() + intervalInMillis);
-
-      const intervalData = data.find((item) => {
-        const itemDate = new Date(item.x);
-        return itemDate >= startDate && itemDate < endDate;
-      });
-
-      if (intervalData) {
-        filteredData.push(intervalData);
-      }
-    }
-
-    return filteredData;
-  };
-
-  // Function to filter data by day intervals over the last month
-  const filterDataByDayIntervals = (
-    data: Data[],
-    currentDate: Date
-  ): Data[] => {
-    const filteredData: Data[] = [];
-    const dayInMillis = 24 * 60 * 60 * 1000;
-    const startTime = new Date(currentDate.getTime() - 30 * dayInMillis);
-
-    for (let i = 0; i < 30; i++) {
-      const startDate = new Date(startTime.getTime() + i * dayInMillis);
-      const endDate = new Date(startDate.getTime() + dayInMillis);
-
-      const intervalData = data.find((item) => {
-        const itemDate = new Date(item.x);
-        return itemDate >= startDate && itemDate < endDate;
-      });
-
-      if (intervalData) {
-        filteredData.push(intervalData);
-      }
-    }
-
-    return filteredData;
   };
 
   const getLastItems = async (id: string) => {
@@ -372,30 +215,100 @@ const ServerDetail: React.FC = () => {
 
         const currentDate = new Date();
 
-        const last24HoursData = filterDataByHourIntervals(
-          formattedData,
-          1,
-          currentDate
-        );
-        const lastWeekData = filterDataBySixHourIntervals(
-          formattedData,
-          currentDate
-        );
-        const lastMonthData = filterDataByDayIntervals(
-          formattedData,
-          currentDate
-        );
+        const last24HoursData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
+          );
+        });
+
+        const lastWeekData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() > currentDate.getTime() - 7 * 24 * 60 * 60 * 1000
+          );
+        });
+
+        const lastMonthData = formattedData.filter((item) => {
+          const itemDate = new Date(item.x);
+          return (
+            itemDate.getTime() >
+            currentDate.getTime() - 30 * 24 * 60 * 60 * 1000
+          );
+        });
+
+        const groupedByHour: { [hour: number]: number[] } = {};
+        last24HoursData.forEach((item) => {
+          const date = new Date(item.x);
+          const hour = date.getHours();
+          if (!groupedByHour[hour]) {
+            groupedByHour[hour] = [];
+          }
+          groupedByHour[hour].push(item.y);
+        });
+
+        const hourlyAverages: { x: string; y: number }[] = Object.keys(
+          groupedByHour
+        ).map((hourkey) => {
+          const hour = parseInt(hourkey, 10);
+          const pings = groupedByHour[hour];
+          const avgPing =
+            pings.reduce((sum: number, ping: number) => sum + ping, 0) /
+            pings.length;
+          return {
+            x: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              hour
+            ).toISOString(),
+            y: parseFloat(avgPing.toFixed(2)),
+          };
+        });
+
+        const groupByInterval = (data: Data[], intervalHours: number) => {
+          const grouped: GroupedData = {};
+          data.forEach((item: Data) => {
+            const date = new Date(item.x);
+            const interval = Math.floor(
+              date.getTime() / (intervalHours * 60 * 60 * 1000)
+            );
+            if (!grouped[interval]) {
+              grouped[interval] = [];
+            }
+            grouped[interval].push(item.y);
+          });
+
+          return Object.keys(grouped).map((intervalKey) => {
+            const interval = parseInt(intervalKey, 10);
+            const pings = grouped[interval];
+            const avgPing =
+              pings.reduce((sum: number, ping: number) => sum + ping, 0) /
+              pings.length;
+            const baseDate = new Date(
+              interval * intervalHours * 60 * 60 * 1000
+            );
+            return {
+              x: baseDate.toISOString(),
+              y: parseFloat(avgPing.toFixed(2)),
+            };
+          });
+        };
+
+        const weeklyAverages = groupByInterval(lastWeekData, 7);
+        const monthlyAverages = groupByInterval(lastMonthData, 24);
 
         setTimeData({
-          last24Hours: last24HoursData,
-          lastWeek: lastWeekData,
-          lastMonth: lastMonthData,
+          last24Hours: hourlyAverages,
+          lastWeek: weeklyAverages,
+          lastMonth: monthlyAverages,
         });
 
         setData(formattedData);
 
         console.log("formattedData", formattedData);
         console.log("Last 24 hours data:", last24HoursData);
+        console.log("Last 24 hours formatteddata:", hourlyAverages);
         console.log("Last week data:", lastWeekData);
         console.log("Last month data:", lastMonthData);
       } else {
@@ -458,11 +371,29 @@ const ServerDetail: React.FC = () => {
 
   const formattedAxisDate = (dateString: string) => {
     const date = new Date(dateString);
+
     const hours = date.getHours().toString().padStart(2, "0");
     const minutes = date.getMinutes().toString().padStart(2, "0");
 
     return `${hours}:${minutes}`;
   };
+
+  const newFormattedAxisDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const hours = ("0" + date.getUTCHours()).slice(-2);
+      const minutes = ("0" + date.getUTCMinutes()).slice(-2);
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error(`Error formatting date "${dateString}": ${error}`);
+      return "";
+    }
+  };
+
+  const formattedDateTry = newFormattedAxisDate("2024-07-02T08:00:00.000Z");
+  console.log(`Formatted date try: ${formattedDateTry}`);
+  const formattedDateTry2 = formattedAxisDate("2024-07-02T08:00:00.000Z");
+  console.log(`Formatted date try 2: ${formattedDateTry2}`);
 
   const animatedDateText = useAnimatedProps(() => {
     console.log(
@@ -476,11 +407,6 @@ const ServerDetail: React.FC = () => {
       defaultValue: "",
     };
   });
-
-  const chartBounds = {
-    left: data.length > 0 ? new Date(data[0].x).getTime() : 0,
-    bottom: 0,
-  };
 
   const handlePeriodChange = (period: string) => {
     let datasetKey: keyof DataSets;
@@ -700,7 +626,10 @@ const ServerDetail: React.FC = () => {
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
-                        tickCount: { x: 5, y: 5 },
+                        tickCount: {
+                          x: timeData["last24Hours"].length - 1,
+                          y: 5,
+                        },
                         font,
                         formatYLabel: (y) => `${y} ms`,
                         formatXLabel: (x) => formattedAxisDate(x),
@@ -711,6 +640,7 @@ const ServerDetail: React.FC = () => {
                     >
                       {({ points, chartBounds }) => (
                         <>
+                          {console.log(points.y)}
                           {chartType === "Line" ? (
                             <MyCustomLine points={points.y} />
                           ) : (
@@ -743,7 +673,7 @@ const ServerDetail: React.FC = () => {
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
-                        tickCount: { x: 5, y: 5 },
+                        tickCount: { x: timeData["lastWeek"].length - 1, y: 5 },
                         font,
                         formatYLabel: (y) => `${y} ms`,
                         formatXLabel: (x) => formattedAxisDate(x),
@@ -754,6 +684,7 @@ const ServerDetail: React.FC = () => {
                     >
                       {({ points, chartBounds }) => (
                         <>
+                          {console.log(points.y)}
                           {chartType === "Line" ? (
                             <MyCustomLine points={points.y} />
                           ) : (
@@ -786,7 +717,10 @@ const ServerDetail: React.FC = () => {
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
-                        tickCount: { x: 5, y: 5 },
+                        tickCount: {
+                          x: timeData["lastMonth"].length - 1,
+                          y: 5,
+                        },
                         font,
                         formatYLabel: (y) => `${y} ms`,
                         formatXLabel: (x) => formattedAxisDate(x),
@@ -870,6 +804,11 @@ const ServerDetail: React.FC = () => {
           {dataContextState.infoUrl.ssl_issued_on !== null && (
             <Text style={[styles.text, { color: textColor }]}>
               Emetteur SSL: {dataContextState.infoUrl.ssl_issued_on}
+            </Text>
+          )}
+          {dataContextState.infoUrl.ssl_expiration_date !== null && (
+            <Text style={[styles.text, { color: textColor }]}>
+              Expiration SSL: {dataContextState.infoUrl.ssl_expiration_date}
             </Text>
           )}
           <Text style={[styles.text, { color: textColor }]}>
