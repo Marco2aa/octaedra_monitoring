@@ -8,6 +8,8 @@ import {
   View,
   TextInput,
 } from "react-native";
+import { Alert } from "react-native";
+0;
 import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
@@ -67,7 +69,7 @@ const ServerDetail: React.FC = () => {
   const [currentDataset, setCurrentDataset] = useState("last24Hours");
   const [typeVisible, setTypeVisible] = useState(false);
   const [periodVisible, setPeriodVisible] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("Month");
+  const [selectedPeriod, setSelectedPeriod] = useState("24Hours");
   const [timeData, setTimeData] = useState<{
     [key: string]: Data[];
   }>({
@@ -204,7 +206,6 @@ const ServerDetail: React.FC = () => {
         });
 
         const currentDate = new Date();
-
         const last24HoursData = formattedData.filter((item) => {
           const itemDate = new Date(item.x);
           // Calculate the interval centered around the current time
@@ -316,6 +317,36 @@ const ServerDetail: React.FC = () => {
     }
   };
 
+  const handleLongPress = async (id: string | undefined) => {
+    try {
+      Alert.alert(
+        "Scanner",
+        `Voulez vous scannez et mettre à jour les ports du serveur N°${id}`,
+        [
+          {
+            text: "Annuler",
+            style: "cancel",
+          },
+          {
+            text: "Confirmer",
+            onPress: async () => {
+              try {
+                const response = await axios.post(
+                  `http://35.180.190.115:8000/check-ports/${id}`
+                );
+                console.log("Réponse de l'API:", response.data);
+              } catch (error) {
+                console.error("Erreur lors de la requête:", error);
+              }
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      console.error("Erreur lors du traitement de l'appui long:", error);
+    }
+  };
   useEffect(() => {
     if (id !== undefined) {
       getPortsByServer(id);
@@ -334,7 +365,11 @@ const ServerDetail: React.FC = () => {
       headerTitleStyle: {
         fontWeight: "bold",
       },
-      headerRight: () => <MaterialIcons name="radar" size={34} color="black" />,
+      headerRight: () => (
+        <Pressable onPress={() => handleLongPress(id)}>
+          <MaterialIcons name="radar" size={34} color="black" />
+        </Pressable>
+      ),
     });
   }, [navigation, id]);
 
@@ -350,6 +385,8 @@ const ServerDetail: React.FC = () => {
       defaultValue: "",
     };
   });
+
+  const customYLabels = [5, 10, 15, 20];
 
   const formattedDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -521,7 +558,7 @@ const ServerDetail: React.FC = () => {
             height: 500,
             marginTop: 30,
             backgroundColor: Colors.dark.itemcontainer,
-            padding: 10,
+            padding: 5,
             borderRadius: 8,
           }}
         >
@@ -554,7 +591,7 @@ const ServerDetail: React.FC = () => {
               <Menu
                 visible={typeVisible}
                 onDismiss={closeTypeMenu}
-                anchor={{ x: 340, y: 0 }}
+                anchor={{ x: 30, y: 130 }}
                 style={{ marginTop: 40 }}
               >
                 <Menu.Item onPress={() => setChartType("Line")} title="Line" />
@@ -582,7 +619,7 @@ const ServerDetail: React.FC = () => {
               <Menu
                 visible={periodVisible}
                 onDismiss={closePeriodMenu}
-                anchor={{ x: 340, y: 0 }}
+                anchor={{ x: 325, y: 130 }}
                 style={{ marginTop: 40 }}
               >
                 <Menu.Item
@@ -661,17 +698,22 @@ const ServerDetail: React.FC = () => {
                       yKeys={["y"]}
                       axisOptions={{
                         tickCount: {
-                          x: 3,
-                          y: 5,
+                          x: 4,
+                          y: 4,
                         },
                         tickValues: {
                           x: hourlytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
-                          y: hourlytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
+                          y: hourlytimestampData.map((item) =>
+                            Math.round(item.y)
+                          ), // Tableau des valeurs y pour les ticks
                         },
                         font,
-                        formatYLabel: (y) => `${y} ms`,
+                        formatYLabel: (y) => `  ${y} ms  `,
                         formatXLabel: (x) => formattedAxisDate(x),
                         labelColor: "lightgrey",
+
+                        // Taille de police de l'axe
+                        // Taille de police des étiquettes de tick
                       }}
                       chartPressState={chartPressState}
                       domainPadding={20}
@@ -711,9 +753,13 @@ const ServerDetail: React.FC = () => {
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
+                        tickCount: {
+                          x: 2,
+                          y: 2,
+                        },
                         tickValues: {
                           x: weeklytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
-                          y: weeklytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
+                          y: weeklytimestampData.map((item) => item.y),
                         },
                         font,
                         formatYLabel: (y) => `${y} ms`,

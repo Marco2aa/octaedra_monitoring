@@ -77,6 +77,8 @@ const Index = () => {
 
   const addAllInfoUrl = async () => {
     try {
+      const response = axios.post("http://35.180.190.115:8000/add-all-infourl");
+      console.log("insertion des infos", (await response).data);
     } catch (error) {
       console.error(error);
     }
@@ -85,6 +87,7 @@ const Index = () => {
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
+      addAllInfoUrl();
       getServers();
       setRefreshing(false);
     }, 2000);

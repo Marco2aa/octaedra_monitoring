@@ -13,7 +13,7 @@ const MyCustomBars: React.FC<MyCustomBarsProps> = ({
   points,
   chartBounds,
   innerPadding = 0.1,
-  customBarWidth = 15,
+  customBarWidth = 10,
 }) => {
   const getColorFromLatency = (yValue: number): string => {
     if (yValue > 28) {

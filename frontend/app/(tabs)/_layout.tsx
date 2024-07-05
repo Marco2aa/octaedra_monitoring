@@ -70,7 +70,7 @@ export default function Tablayout() {
   const addAllInfoUrl = async () => {
     try {
       const response = await axios.post(
-        "http://192.168.1.94:8000/add-all-infourl"
+        "http://35.180.190.115:8000/add-all-infourl"
       );
       const data = response.data;
       console.log(data);
@@ -95,7 +95,7 @@ export default function Tablayout() {
     };
     try {
       const response = await axios.post(
-        "http://192.168.1.94:8000/add-url",
+        "http://35.180.190.115:8000/add-url",
         completeFormData
       );
       const data = response.data;
@@ -110,7 +110,7 @@ export default function Tablayout() {
               num_code: chip.label,
             };
             const responseTwo = await axios.post(
-              `http://192.168.1.94:8000/add-codehttp/${url_id}`,
+              `http://35.180.190.115:8000/add-codehttp/${url_id}`,
               chipData
             );
             const data = responseTwo.data;
