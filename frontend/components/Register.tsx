@@ -2,33 +2,37 @@ import { View } from "react-native";
 import React, { useState } from "react";
 import { TextInput, Button, Text } from "react-native-paper";
 import axios from "axios";
-import querystring from 'querystring'
+import querystring from "querystring";
 
-const Register = ({onSwitchToLogin}:{ onSwitchToLogin: () => void }) => {
+const Register = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     try {
       setLoading(true);
       const data = {
         username: username,
-        email: email, 
+        email: email,
         password: password,
         disabled: false,
       };
-      const response = await axios.post('http://127.0.0.1:8000/register', data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.post(
+        "http://35.180.190.115:8000/register",
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       console.log(response.data);
       setLoading(false);
-      onSwitchToLogin(); 
+      onSwitchToLogin();
     } catch (error) {
-      console.error('Failed to register:', error);
+      console.error("Failed to register:", error);
       setLoading(false);
     }
   };

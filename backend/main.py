@@ -249,7 +249,7 @@ async def get_infourl_by_id(url_id: int):
                     "domain_creation_date":info_url[17],
                     "domain_expiration_date": info_url[18],
                     "server_version": info_url[19],
-                    "updatedAt": info_url[20],
+                    "updatedAt": info_url[20],  
                     "ssl_expiration_date":info_url[21]
                 }
             else:

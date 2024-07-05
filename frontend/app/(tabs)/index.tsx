@@ -67,9 +67,16 @@ const Index = () => {
   const fetchTimeUntilNextQuarterHour = async () => {
     try {
       const response = await axios.get(
-        "http://13.38.9.138:8000/next-quarter-hour"
+        "http://35.180.190.115:8000/next-quarter-hour"
       );
       setTimeLeft(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addAllInfoUrl = async () => {
+    try {
     } catch (error) {
       console.error(error);
     }
@@ -86,14 +93,14 @@ const Index = () => {
   const getServers = async () => {
     try {
       const response = await axios.get<Server[]>(
-        "http://192.168.1.94:8000/urls"
+        "http://35.180.190.115:8000/urls"
       );
       const fetchedServers = response.data;
 
       const portPromises = fetchedServers.map(async (server) => {
         try {
           const response = await axios.get(
-            `http://192.168.1.94:8000/number-of-ports/${server.id}`
+            `http://35.180.190.115:8000/number-of-ports/${server.id}`
           );
           const numberOfPorts = response.data;
           return { id: server.id, numberOfPorts };
@@ -110,7 +117,7 @@ const Index = () => {
       const dataPromises = fetchedServers.map(async (server) => {
         try {
           const response = await axios.get(
-            `http://192.168.1.94:8000/get/info-url/${server.id}`
+            `http://35.180.190.115:8000/get/info-url/${server.id}`
           );
           const { ip_address, server_version, packets_loss, avg_latency } =
             response.data;
@@ -184,7 +191,7 @@ const Index = () => {
   const deleteServerById = async (id: number) => {
     try {
       const response = await axios.delete(
-        `http://192.168.1.94:8000/delete-url/${id}`,
+        `http://35.180.190.115:8000/delete-url/${id}`,
         {
           headers: {
             accept: "application/json",
@@ -231,7 +238,7 @@ const Index = () => {
     try {
       setLoadingMap((prev) => ({ ...prev, [id]: true }));
       const response = await axios.post(
-        `http://192.168.1.94:8000/scan-ports/${id}`
+        `http://35.180.190.115:8000/scan-ports/${id}`
       );
       if (response.status === 200) {
         Alert.alert("Succès", "Scan des ports terminé et ports insérés");
@@ -247,10 +254,8 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // Fetch the initial time
     fetchTimeUntilNextQuarterHour();
 
-    // Update the time every second
     const timerId = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime.seconds > 0) {
@@ -258,14 +263,12 @@ const Index = () => {
         } else if (prevTime.minutes > 0) {
           return { minutes: prevTime.minutes - 1, seconds: 59 };
         } else {
-          // When the timer reaches zero, fetch new time
           fetchTimeUntilNextQuarterHour();
           return { minutes: 0, seconds: 0 };
         }
       });
     }, 1000);
 
-    // Clean up the interval on component unmount
     return () => clearInterval(timerId);
   }, []);
 
@@ -353,7 +356,7 @@ const Index = () => {
                       </Chip>
                     ) : (
                       <View
-                        style={{ position: "absolute", right: -125, top: -15 }}
+                        style={{ position: "absolute", right: -50, top: -21 }}
                       >
                         <Chip
                           mode="outlined"
@@ -467,7 +470,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginBottom: 30,
-    // overflow: "hidden",
+    overflow: "hidden",
   },
   itemContent: {},
   text: {

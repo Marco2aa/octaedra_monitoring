@@ -23,7 +23,7 @@ const Login = ({ onSwitchToRegister = () => {} }) => {
       };
 
       const response = await axios.post(
-        "http://192.168.1.94:8000/token",
+        "http://35.180.190.115:8000/token",
         querystring.stringify(data),
         {
           headers: {

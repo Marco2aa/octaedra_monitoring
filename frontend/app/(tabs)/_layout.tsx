@@ -36,7 +36,7 @@ export default function Tablayout() {
   const fetchTimeUntilNextQuarterHour = async () => {
     try {
       const response = await axios.get(
-        "http://13.38.9.138:8000/next-quarter-hour"
+        "http://35.180.190.115:8000/next-quarter-hour"
       );
       setTimeLeft(response.data);
     } catch (error) {

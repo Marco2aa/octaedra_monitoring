@@ -12,7 +12,7 @@ const Notification = () => {
   const sendTokenToBackend = async (token: string | undefined) => {
     try {
       const response = await axios.post(
-        "http://192.168.1.94:8000/register-token",
+        "http://35.180.190.115:8000/register-token",
         {
           token: token,
         }
@@ -25,7 +25,7 @@ const Notification = () => {
   const sendNotification = async (token: string | undefined) => {
     try {
       const response = await axios.post(
-        "http://192.168.1.94:8000/register-token",
+        "http://35.180.190.115:8000/register-token",
         {
           token: token,
         }

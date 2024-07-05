@@ -55,16 +55,6 @@ type Data = {
   y: number;
 };
 
-type HourlyData = {
-  x: string; // heure formatée pour le graphique
-  y: number; // ping moyen pour cette heure
-};
-
-const DATA = Array.from({ length: 31 }, (_, i) => ({
-  day: i,
-  highTmp: 40 + 30 * Math.random(),
-}));
-
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 const ServerDetail: React.FC = () => {
@@ -73,11 +63,11 @@ const ServerDetail: React.FC = () => {
   const { state: dataContextState, dispatch } = useDataContext();
   const [data, setData] = useState<Data[]>([]);
   const font = useFont(require("../../assets/fonts/Poppins-Regular.ttf"), 12);
-  const [chartType, setChartType] = useState<"Line" | "Bar">("Line");
+  const [chartType, setChartType] = useState<"Line" | "Bar">("Bar");
   const [currentDataset, setCurrentDataset] = useState("last24Hours");
   const [typeVisible, setTypeVisible] = useState(false);
   const [periodVisible, setPeriodVisible] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("Week");
+  const [selectedPeriod, setSelectedPeriod] = useState("Month");
   const [timeData, setTimeData] = useState<{
     [key: string]: Data[];
   }>({
@@ -89,7 +79,7 @@ const ServerDetail: React.FC = () => {
   const { state: chartPressState, isActive } = useChartPressState({
     x: "",
     y: { y: 0 },
-  });
+  }) as any; // @ts-ignore;
 
   function ToolTip({
     x,
@@ -110,7 +100,7 @@ const ServerDetail: React.FC = () => {
   const getPortsByServer = async (id: string) => {
     try {
       const response = await axios.get<Port[]>(
-        `http://192.168.1.94:8000/ports/${id}`
+        `http://35.180.190.115:8000/ports/${id}`
       );
       console.log("Ports response:", response.data);
       const fetchedPorts = response.data;
@@ -118,7 +108,7 @@ const ServerDetail: React.FC = () => {
         fetchedPorts.map(async (port) => {
           try {
             const responseTwo = await axios.get(
-              `http://192.168.1.94:8000/get/info-port/${port.id_port}`
+              `http://35.180.190.115:8000/get/info-port/${port.id_port}`
             );
             const infoPortArray = responseTwo.data;
             if (infoPortArray.length > 0) {
@@ -161,7 +151,7 @@ const ServerDetail: React.FC = () => {
   const getInfoByUrl = async (id: string) => {
     try {
       const response = await axios.get(
-        `http://192.168.1.94:8000/get/info-url/${id}`
+        `http://35.180.190.115:8000/get/info-url/${id}`
       );
       console.log("Info URL response:", response.data);
       dispatch({ type: "SET_INFO_URL", payload: response.data });
@@ -180,7 +170,7 @@ const ServerDetail: React.FC = () => {
   const addInfoUrl = async () => {
     try {
       const response = await axios.post(
-        `http://192.168.1.94:8000/add-infourl/${id}`
+        `http://35.180.190.115:8000/add-infourl/${id}`
       );
       console.log(response.data);
     } catch (error) {
@@ -191,7 +181,7 @@ const ServerDetail: React.FC = () => {
   const getLastItems = async (id: string) => {
     try {
       const response = await axios.get(
-        `http://192.168.1.94:8000/get-last-250/${id}`
+        `http://35.180.190.115:8000/get-last-250/${id}`
       );
       console.log("Last items response:", response.data);
       dispatch({ type: "SET_LAST_ITEMS", payload: response.data });
@@ -217,8 +207,12 @@ const ServerDetail: React.FC = () => {
 
         const last24HoursData = formattedData.filter((item) => {
           const itemDate = new Date(item.x);
+          // Calculate the interval centered around the current time
+          const intervalStart = currentDate.getTime() - 12 * 60 * 60 * 1000; // 12 hours before current time
+          const intervalEnd = currentDate.getTime() + 12 * 60 * 60 * 1000; // 12 hours after current time
           return (
-            itemDate.getTime() > currentDate.getTime() - 24 * 60 * 60 * 1000
+            itemDate.getTime() >= intervalStart &&
+            itemDate.getTime() <= intervalEnd
           );
         });
 
@@ -309,8 +303,8 @@ const ServerDetail: React.FC = () => {
         console.log("formattedData", formattedData);
         console.log("Last 24 hours data:", last24HoursData);
         console.log("Last 24 hours formatteddata:", hourlyAverages);
-        console.log("Last week data:", lastWeekData);
-        console.log("Last month data:", lastMonthData);
+        console.log("Last week data:", weeklyAverages);
+        console.log("Last month data:", monthlyAverages);
       } else {
         console.error("Les données récupérées ne sont pas au format attendu.");
       }
@@ -366,19 +360,36 @@ const ServerDetail: React.FC = () => {
     const minutes = date.getMinutes().toString().padStart(2, "0");
     const seconds = date.getSeconds().toString().padStart(2, "0");
 
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    return `${day}/${month}`;
   };
 
-  const formattedAxisDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formattedAxisDate = (date: string | number) => {
+    try {
+      let parsedDate: Date;
 
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
+      if (typeof date === "string") {
+        parsedDate = new Date(date);
+      } else if (typeof date === "number") {
+        parsedDate = new Date(date);
+      } else {
+        throw new Error("Invalid input type. Expected string or number.");
+      }
 
-    return `${hours}:${minutes}`;
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error(`Invalid date input: "${date}"`);
+      }
+
+      const hours = parsedDate.getHours().toString().padStart(2, "0");
+      const minutes = parsedDate.getMinutes().toString().padStart(2, "0");
+
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error(`Error formatting date "${date}": ${error}`);
+      return ""; // Retourne une chaîne vide en cas d'erreur
+    }
   };
 
-  const newFormattedAxisDate = (dateString: string) => {
+  const newFormattedAxisDate = (dateString: Date) => {
     try {
       const date = new Date(dateString);
       const hours = ("0" + date.getUTCHours()).slice(-2);
@@ -389,11 +400,6 @@ const ServerDetail: React.FC = () => {
       return "";
     }
   };
-
-  const formattedDateTry = newFormattedAxisDate("2024-07-02T08:00:00.000Z");
-  console.log(`Formatted date try: ${formattedDateTry}`);
-  const formattedDateTry2 = formattedAxisDate("2024-07-02T08:00:00.000Z");
-  console.log(`Formatted date try 2: ${formattedDateTry2}`);
 
   const animatedDateText = useAnimatedProps(() => {
     console.log(
@@ -407,6 +413,34 @@ const ServerDetail: React.FC = () => {
       defaultValue: "",
     };
   });
+
+  type OriginalDataItem = {
+    x: number;
+    y: number;
+  };
+
+  const convertToTimestamp = (originalData: Data[]): OriginalDataItem[] => {
+    return originalData.map((item) => {
+      const timestamp = new Date(item.x).getTime(); // Convertit la date en timestamp (en millisecondes depuis le 1er janvier 1970)
+      return {
+        ...item,
+        x: timestamp, // Remplace la propriété 'x' par le timestamp calculé
+      };
+    });
+  };
+
+  const weeklytimestampData = convertToTimestamp(timeData["lastWeek"]);
+  const dailytimestampData = convertToTimestamp(timeData["lastMonth"]);
+  const hourlytimestampData = convertToTimestamp(timeData["last24Hours"]);
+
+  console.log("timestampData", weeklytimestampData);
+  console.log("timestampData", dailytimestampData);
+  console.log("timestampData", hourlytimestampData);
+
+  const timestampFormattedDate = (dateString: string): number => {
+    const date = new Date(dateString);
+    return date.getTime();
+  };
 
   const handlePeriodChange = (period: string) => {
     let datasetKey: keyof DataSets;
@@ -622,13 +656,17 @@ const ServerDetail: React.FC = () => {
                   {timeData["last24Hours"] &&
                   timeData["last24Hours"].length > 0 ? (
                     <CartesianChart
-                      data={timeData["last24Hours"]}
+                      data={hourlytimestampData}
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
                         tickCount: {
-                          x: timeData["last24Hours"].length - 1,
+                          x: 3,
                           y: 5,
+                        },
+                        tickValues: {
+                          x: hourlytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
+                          y: hourlytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
                         },
                         font,
                         formatYLabel: (y) => `${y} ms`,
@@ -669,11 +707,14 @@ const ServerDetail: React.FC = () => {
                 <>
                   {timeData["lastWeek"] && timeData["lastWeek"].length > 0 ? (
                     <CartesianChart
-                      data={timeData["lastWeek"]}
+                      data={weeklytimestampData}
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
-                        tickCount: { x: timeData["lastWeek"].length - 1, y: 5 },
+                        tickValues: {
+                          x: weeklytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
+                          y: weeklytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
+                        },
                         font,
                         formatYLabel: (y) => `${y} ms`,
                         formatXLabel: (x) => formattedAxisDate(x),
@@ -713,13 +754,13 @@ const ServerDetail: React.FC = () => {
                 <>
                   {timeData["lastMonth"] && timeData["lastMonth"].length > 0 ? (
                     <CartesianChart
-                      data={timeData["lastMonth"]}
+                      data={dailytimestampData}
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
-                        tickCount: {
-                          x: timeData["lastMonth"].length - 1,
-                          y: 5,
+                        tickValues: {
+                          x: dailytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
+                          y: dailytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
                         },
                         font,
                         formatYLabel: (y) => `${y} ms`,
