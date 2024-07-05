@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   },
   itemContent: {},
   text: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "300",
   },
   list: {

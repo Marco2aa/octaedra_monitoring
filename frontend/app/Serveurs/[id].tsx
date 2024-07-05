@@ -702,18 +702,13 @@ const ServerDetail: React.FC = () => {
                           y: 4,
                         },
                         tickValues: {
-                          x: hourlytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
-                          y: hourlytimestampData.map((item) =>
-                            Math.round(item.y)
-                          ), // Tableau des valeurs y pour les ticks
+                          x: hourlytimestampData.map((item) => item.x),
+                          y: hourlytimestampData.map((item) => item.y),
                         },
                         font,
                         formatYLabel: (y) => `  ${y} ms  `,
                         formatXLabel: (x) => formattedAxisDate(x),
                         labelColor: "lightgrey",
-
-                        // Taille de police de l'axe
-                        // Taille de police des étiquettes de tick
                       }}
                       chartPressState={chartPressState}
                       domainPadding={20}
@@ -950,7 +945,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
   },
   text: {
-    fontSize: 18,
+    fontSize: 14,
   },
   list: {
     paddingBottom: 30,

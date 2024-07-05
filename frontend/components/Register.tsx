@@ -38,7 +38,7 @@ const Register = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) => {
   };
 
   return (
-    <View>
+    <View style={{ width: "90%", gap: 20 }}>
       <TextInput
         mode="outlined"
         label="Username"

@@ -61,9 +61,9 @@ const Servers = () => {
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.header}>
-        <Text style={[styles.text, { color: textColor }]}>Serveurs</Text>
         <ThemeSwitch />
       </View>
+
       <Text style={styles.maintitle}>Délai de connexion</Text>
       <Text style={[styles.text, { color: textColor }]}>
         Définis le délai de connexion par défaut. Nous considérons le serveur
@@ -98,7 +98,9 @@ const Servers = () => {
             onDismiss={hideModal}
             contentContainerStyle={styles.modalContainer}
           >
-            <Text style={{ marginBottom: 15 }}>Modifier le Timeout</Text>
+            <Text style={{ marginBottom: 15, fontSize: 20, color: "white" }}>
+              Modifier le Timeout
+            </Text>
             <TextInput
               mode="outlined"
               activeOutlineColor={hasErrors() ? "#F77F71" : "orange"}
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
   rippleContent: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: Colors.dark.itemcontainer,
     padding: 16,
   },
   fullWidthText: {
@@ -191,8 +193,8 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   modalContainer: {
-    backgroundColor: "white",
-    padding: 20,
+    backgroundColor: Colors.dark.background,
+    padding: 0,
   },
   input: {
     width: "100%",
