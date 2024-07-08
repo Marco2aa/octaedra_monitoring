@@ -359,7 +359,7 @@ const Index = () => {
                       </Chip>
                     ) : (
                       <View
-                        style={{ position: "absolute", right: -50, top: -21 }}
+                        style={{ position: "absolute", right: -167, top: -21 }}
                       >
                         <Chip
                           mode="outlined"
@@ -407,11 +407,10 @@ const Index = () => {
                       </Text>
                     </View>
                     <Text style={[styles.text, { color: textColor }]}>
-                      {serverDataMap[item.id]?.ip ?? "Chargement..."}
+                      {serverDataMap[item.id]?.ip ?? ""}
                     </Text>
                     <Text style={[styles.text, { color: textColor }]}>
-                      Serveur:{" "}
-                      {serverDataMap[item.id]?.version ?? "Chargement..."}
+                      Serveur: {serverDataMap[item.id]?.version ?? ""}
                     </Text>
                     <Text
                       style={[
@@ -429,10 +428,7 @@ const Index = () => {
                             serverDataMap[item.id]?.avg_latency ??
                             "Chargement..."
                           }ms de latence moyenne`
-                        : `${
-                            serverDataMap[item.id]?.packetLoss ??
-                            "Chargement..."
-                          }%`}
+                        : `${serverDataMap[item.id]?.packetLoss ?? ""}%`}
                     </Text>
                   </View>
                 </View>
