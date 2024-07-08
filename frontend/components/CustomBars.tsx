@@ -16,9 +16,9 @@ const MyCustomBars: React.FC<MyCustomBarsProps> = ({
   customBarWidth = 10,
 }) => {
   const getColorFromLatency = (yValue: number): string => {
-    if (yValue > 28) {
+    if (yValue > 7) {
       return "red";
-    } else if (yValue > 25) {
+    } else if (yValue > 6) {
       return "orange";
     } else {
       return "green";

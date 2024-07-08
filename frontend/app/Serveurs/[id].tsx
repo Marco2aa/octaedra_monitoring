@@ -386,16 +386,12 @@ const ServerDetail: React.FC = () => {
     };
   });
 
-  const customYLabels = [5, 10, 15, 20];
+  const customYLabels = [5, 6, 7, 8, 9, 10];
 
-  const formattedDate = (dateString: string) => {
+  const formattedDate = (dateString: string | number) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, "0");
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    const seconds = date.getSeconds().toString().padStart(2, "0");
 
     return `${day}/${month}`;
   };
@@ -422,18 +418,6 @@ const ServerDetail: React.FC = () => {
       return `${hours}:${minutes}`;
     } catch (error) {
       console.error(`Error formatting date "${date}": ${error}`);
-      return ""; // Retourne une chaîne vide en cas d'erreur
-    }
-  };
-
-  const newFormattedAxisDate = (dateString: Date) => {
-    try {
-      const date = new Date(dateString);
-      const hours = ("0" + date.getUTCHours()).slice(-2);
-      const minutes = ("0" + date.getUTCMinutes()).slice(-2);
-      return `${hours}:${minutes}`;
-    } catch (error) {
-      console.error(`Error formatting date "${dateString}": ${error}`);
       return "";
     }
   };
@@ -458,10 +442,10 @@ const ServerDetail: React.FC = () => {
 
   const convertToTimestamp = (originalData: Data[]): OriginalDataItem[] => {
     return originalData.map((item) => {
-      const timestamp = new Date(item.x).getTime(); // Convertit la date en timestamp (en millisecondes depuis le 1er janvier 1970)
+      const timestamp = new Date(item.x).getTime();
       return {
         ...item,
-        x: timestamp, // Remplace la propriété 'x' par le timestamp calculé
+        x: timestamp,
       };
     });
   };
@@ -500,6 +484,8 @@ const ServerDetail: React.FC = () => {
     setCurrentDataset(datasetKey);
     setPeriodVisible(false);
   };
+
+  const modifiedHourlytimestampData = hourlytimestampData.slice(0, -1);
 
   const renderPortItem = ({ item }: { item: Port }) => (
     <View
@@ -702,8 +688,8 @@ const ServerDetail: React.FC = () => {
                           y: 4,
                         },
                         tickValues: {
-                          x: hourlytimestampData.map((item) => item.x),
-                          y: hourlytimestampData.map((item) => item.y),
+                          x: modifiedHourlytimestampData.map((item) => item.x),
+                          y: customYLabels,
                         },
                         font,
                         formatYLabel: (y) => `  ${y} ms  `,
@@ -749,16 +735,16 @@ const ServerDetail: React.FC = () => {
                       yKeys={["y"]}
                       axisOptions={{
                         tickCount: {
-                          x: 2,
-                          y: 2,
+                          x: 3,
+                          y: 5,
                         },
                         tickValues: {
                           x: weeklytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
-                          y: weeklytimestampData.map((item) => item.y),
+                          y: customYLabels,
                         },
                         font,
                         formatYLabel: (y) => `${y} ms`,
-                        formatXLabel: (x) => formattedAxisDate(x),
+                        formatXLabel: (x) => formattedDate(x),
                         labelColor: "lightgrey",
                       }}
                       chartPressState={chartPressState}
@@ -799,13 +785,17 @@ const ServerDetail: React.FC = () => {
                       xKey="x"
                       yKeys={["y"]}
                       axisOptions={{
+                        tickCount: {
+                          x: dailytimestampData.length,
+                          y: 5,
+                        },
                         tickValues: {
-                          x: dailytimestampData.map((item) => item.x), // Tableau des valeurs x pour les ticks (timestamps)
-                          y: dailytimestampData.map((item) => item.y), // Tableau des valeurs y pour les ticks
+                          x: dailytimestampData.map((item) => item.x),
+                          y: customYLabels,
                         },
                         font,
                         formatYLabel: (y) => `${y} ms`,
-                        formatXLabel: (x) => formattedAxisDate(x),
+                        formatXLabel: (x) => formattedDate(x),
                         labelColor: "lightgrey",
                       }}
                       chartPressState={chartPressState}
