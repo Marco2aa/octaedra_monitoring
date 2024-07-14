@@ -1,5 +1,14 @@
 // DataContext.tsx
-import React, { ReactNode, createContext, useContext, useReducer } from "react";
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useReducer,
+} from "react";
+import axios from "axios";
+import { sendPushNotification } from "@/components/NotificationUtils";
+import { usePushNotification } from "@/components/usePushNotification";
 
 type Port = {
   id_port: string;
@@ -89,6 +98,16 @@ const DataContext = createContext<{
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(dataReducer, initialState);
+  const { expoPushToken } = usePushNotification();
+
+  useEffect(() => {
+    if (state.infoUrl && state.infoUrl.packets_loss === 0) {
+      if (expoPushToken) {
+        sendPushNotification(expoPushToken.data);
+      }
+    }
+  }, [state.infoUrl, expoPushToken]);
+
   return (
     <DataContext.Provider value={{ state, dispatch }}>
       {children}

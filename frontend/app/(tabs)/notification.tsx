@@ -22,19 +22,6 @@ const Notification = () => {
       console.error("Erreur lors de l'envoi du token au backend:", error);
     }
   };
-  const sendNotification = async (token: string | undefined) => {
-    try {
-      const response = await axios.post(
-        "http://35.180.190.115:8000/register-token",
-        {
-          token: token,
-        }
-      );
-      console.log("Token envoyé au backend avec succès:", response.data);
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du token au backend:", error);
-    }
-  };
 
   const handleNotificationPress = () => {
     sendTokenToBackend(expoPushToken?.data);

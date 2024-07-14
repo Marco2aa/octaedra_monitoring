@@ -22,7 +22,7 @@ import React, {
 import { Colors } from "../../constants/Colors";
 import { useTheme } from "@/components/ThemeContext";
 import axios from "axios";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
 import { AntDesign } from "@expo/vector-icons";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -33,6 +33,7 @@ import { Swipeable } from "react-native-gesture-handler";
 import { ProgressBar, MD3Colors, Chip } from "react-native-paper";
 import { useDataContext } from "@/components/DataContext";
 import { useTimer } from "@/components/TimerContext";
+import { NativeStackNavigatorProps } from "react-native-screens/lib/typescript/native-stack/types";
 
 const Index = () => {
   type Server = {
@@ -54,6 +55,7 @@ const Index = () => {
   const [portsMap, setPortsMap] = useState<{ [key: string]: number }>({});
   const [refreshing, setRefreshing] = React.useState(false);
   const [loadingMap, setLoadingMap] = useState<{ [key: number]: boolean }>({});
+  const navigation = useNavigation<NativeStackNavigatorProps>();
   const [serverDataMap, setServerDataMap] = useState<{
     [key: string]: {
       ip: string;
@@ -84,13 +86,17 @@ const Index = () => {
     }
   };
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      addAllInfoUrl();
-      getServers();
+    try {
+      // Attendre la complétion des deux opérations
+      await Promise.all([addAllInfoUrl(), getServers()]);
+    } catch (error) {
+      console.error("Erreur lors du rafraîchissement :", error);
+    } finally {
+      // Désactiver l'état de rafraîchissement
       setRefreshing(false);
-    }, 2000);
+    }
   }, []);
 
   const getServers = async () => {
@@ -204,6 +210,10 @@ const Index = () => {
       console.log(response.data);
     } catch (error) {
       console.error("Erreur lors de la suppresion de l'élément", error);
+    } finally {
+      setTimeout(() => {
+        navigation.navigate("index");
+      }, 100);
     }
   };
 

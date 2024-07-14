@@ -103,27 +103,44 @@ export default function Tablayout() {
       console.log(data);
       url_id = data.id;
       console.log(formData.chips);
+
       if (formData.chips && formData.chips.length > 0) {
         await Promise.all(
           formData.chips.map(async (chip) => {
             const chipData = {
               num_code: chip.label,
             };
-            const responseTwo = await axios.post(
-              `http://35.180.190.115:8000/add-codehttp/${url_id}`,
-              chipData
-            );
-            const data = responseTwo.data;
-            console.log(data);
+            try {
+              const responseTwo = await axios.post(
+                `http://35.180.190.115:8000/add-codehttp/${url_id}`,
+                chipData
+              );
+              const data = responseTwo.data;
+              console.log(data);
+            } catch (chipError) {
+              console.error("Erreur lors de l'ajout du code HTTP", chipError);
+            }
           })
         );
-        navigation.navigate("index");
+        try {
+          const responseThree = await axios.post(
+            "http://35.180.190.115:8000/add-all-infourl"
+          );
+          const data2 = responseThree.data;
+          console.log("url mis à jour après ajout d'une url spécifique", data2);
+        } catch (updateError) {
+          console.error("Erreur lors de la mise à jour de l'url", updateError);
+        }
       }
+      navigation.navigate("index");
     } catch (error) {
-      console.error('Erreur lors de la creation de l"url ', error);
+      console.error('Erreur lors de la création de l"url ', error);
+    } finally {
+      setTimeout(() => {
+        navigation.navigate("index");
+      }, 100);
     }
   };
-
   return (
     <>
       <Tabs

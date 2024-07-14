@@ -4,12 +4,14 @@ import { TextInput, Button, Text } from "react-native-paper";
 import axios from "axios";
 import querystring from "querystring";
 import { useRouter } from "expo-router";
+import { useAuth } from "./AuthContext";
 
 const Login = ({ onSwitchToRegister = () => {} }) => {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [passwordVisible, setPasswordVisible] = React.useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     try {

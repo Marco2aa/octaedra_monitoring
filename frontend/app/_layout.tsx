@@ -11,33 +11,36 @@ import { DataProvider } from "@/components/DataContext";
 import { RootSiblingParent } from "react-native-root-siblings";
 import { TimerProvider, useTimer } from "@/components/TimerContext";
 import axios from "axios";
+import { AuthProvider } from "@/components/AuthContext";
 
 const RootLayout = () => {
   return (
     <TimerProvider>
-      <RootSiblingParent>
-        <PaperProvider>
-          <DataProvider>
-            <FormProvider>
-              <GestureHandlerRootView>
-                <BottomSheetModalProvider>
-                  <ThemeProvider>
-                    <StatusBar hidden={false} />
-                    <Stack>
-                      <Stack.Screen
-                        name="(tabs)"
-                        options={{
-                          headerShown: false,
-                        }}
-                      ></Stack.Screen>
-                    </Stack>
-                  </ThemeProvider>
-                </BottomSheetModalProvider>
-              </GestureHandlerRootView>
-            </FormProvider>
-          </DataProvider>
-        </PaperProvider>
-      </RootSiblingParent>
+      <AuthProvider>
+        <RootSiblingParent>
+          <PaperProvider>
+            <DataProvider>
+              <FormProvider>
+                <GestureHandlerRootView>
+                  <BottomSheetModalProvider>
+                    <ThemeProvider>
+                      <StatusBar hidden={false} />
+                      <Stack>
+                        <Stack.Screen
+                          name="(tabs)"
+                          options={{
+                            headerShown: false,
+                          }}
+                        ></Stack.Screen>
+                      </Stack>
+                    </ThemeProvider>
+                  </BottomSheetModalProvider>
+                </GestureHandlerRootView>
+              </FormProvider>
+            </DataProvider>
+          </PaperProvider>
+        </RootSiblingParent>
+      </AuthProvider>
     </TimerProvider>
   );
 };
