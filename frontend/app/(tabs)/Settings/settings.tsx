@@ -22,10 +22,6 @@ const Servers = () => {
   const [visibleModal, setVisibleModal] = useState(false);
   const [timeout, setTimeout] = useState(DEFAULT_TIMEOUT.toString());
 
-  const backgroundColor =
-    theme === "dark" ? Colors.dark.background : Colors.light.background;
-  const textColor = theme === "dark" ? Colors.dark.text : Colors.light.text;
-
   const showModal = () => setVisibleModal(true);
   const hideModal = () => setVisibleModal(false);
 
@@ -59,9 +55,9 @@ const Servers = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: "#242627" }]}>
       <Text style={styles.maintitle}>Délai de connexion</Text>
-      <Text style={[styles.text, { color: textColor }]}>
+      <Text style={[styles.text, { color: "white" }]}>
         Définis le délai de connexion par défaut. Nous considérons le serveur
         inaccessible après cette période.
       </Text>
@@ -73,10 +69,10 @@ const Servers = () => {
         >
           <View style={styles.rippleContent}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.fullWidthText, { color: textColor }]}>
+              <Text style={[styles.fullWidthText, { color: "white" }]}>
                 Timeout
               </Text>
-              <Text style={[styles.fullWidthText, { color: textColor }]}>
+              <Text style={[styles.fullWidthText, { color: "white" }]}>
                 {formData.timeout} sec
               </Text>
             </View>

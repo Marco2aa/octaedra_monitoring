@@ -225,12 +225,6 @@ const Index = () => {
     console.log(serverDataMap);
   }, []);
 
-  const { theme } = useTheme();
-
-  const backgroundColor =
-    theme === "dark" ? Colors.dark.background : Colors.light.background;
-  const textColor = theme === "dark" ? Colors.dark.text : Colors.light.text;
-
   const handleRightSwipe = (id: number) => {
     Alert.alert(
       "Confirmation",
@@ -301,7 +295,7 @@ const Index = () => {
 
   return (
     <ScrollView
-      style={[styles.mainContainer, { backgroundColor }]}
+      style={[styles.mainContainer, { backgroundColor: "#242627" }]}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
@@ -325,10 +319,7 @@ const Index = () => {
               style={[
                 styles.containerItem,
                 {
-                  backgroundColor:
-                    theme === "dark"
-                      ? Colors.dark.itemcontainer
-                      : Colors.light.itemcontainer,
+                  backgroundColor: "#323537",
                 },
               ]}
             >
@@ -411,17 +402,17 @@ const Index = () => {
                         {item.protocole}
                       </Text>
                     </View>
-                    <Text style={[styles.text, { color: textColor }]}>
+                    <Text style={[styles.text, { color: "white" }]}>
                       {serverDataMap[item.id]?.ip ?? ""}
                     </Text>
-                    <Text style={[styles.text, { color: textColor }]}>
+                    <Text style={[styles.text, { color: "white" }]}>
                       Serveur: {serverDataMap[item.id]?.version ?? ""}
                     </Text>
                     <Text
                       style={[
                         styles.text,
                         {
-                          color: textColor,
+                          color: "white",
                           flexWrap: "wrap",
                           fontSize: 15,
                           width: "80%",
@@ -437,7 +428,7 @@ const Index = () => {
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.text, { color: textColor }]}>
+                <Text style={[styles.text, { color: "lightgrey" }]}>
                   {portsMap[item.id] === 0
                     ? "Appui long pour scanner"
                     : `Nombre de ports scannés : ${portsMap[item.id]}`}
