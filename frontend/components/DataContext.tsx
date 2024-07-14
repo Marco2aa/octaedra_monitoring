@@ -84,6 +84,18 @@ const dataReducer = (state: State, action: Action): State => {
   }
 };
 
+const sendTokenToBackend = async (token: string | undefined) => {
+  try {
+    const response = await axios.post(
+      `http://35.180.190.115:8000/add-token?token=${token}`
+    );
+    console.log("Token envoyé au backend avec succès:", response.data);
+    console.log(token);
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du token au backend:", error);
+  }
+};
+
 type DataProviderProps = {
   children: ReactNode;
 };
@@ -101,12 +113,11 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const { expoPushToken } = usePushNotification();
 
   useEffect(() => {
-    if (state.infoUrl && state.infoUrl.packets_loss === 0) {
-      if (expoPushToken) {
-        sendPushNotification(expoPushToken.data);
-      }
+    if (expoPushToken?.data) {
+      console.log(expoPushToken.data);
+      sendTokenToBackend(expoPushToken.data);
     }
-  }, [state.infoUrl, expoPushToken]);
+  }, [expoPushToken?.data]);
 
   return (
     <DataContext.Provider value={{ state, dispatch }}>

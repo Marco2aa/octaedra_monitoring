@@ -60,10 +60,6 @@ const Servers = () => {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.header}>
-        <ThemeSwitch />
-      </View>
-
       <Text style={styles.maintitle}>Délai de connexion</Text>
       <Text style={[styles.text, { color: textColor }]}>
         Définis le délai de connexion par défaut. Nous considérons le serveur

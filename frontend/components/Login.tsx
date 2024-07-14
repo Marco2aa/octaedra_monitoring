@@ -64,7 +64,7 @@ const Login = ({ onSwitchToRegister = () => {} }) => {
         secureTextEntry={!passwordVisible}
       />
       <Button
-        loading={true}
+        loading={false}
         buttonColor="orange"
         mode="contained"
         onPress={handleLogin}

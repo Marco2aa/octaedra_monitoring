@@ -90,7 +90,7 @@ const Index = () => {
     setRefreshing(true);
     try {
       // Attendre la complétion des deux opérations
-      await Promise.all([addAllInfoUrl(), getServers()]);
+      await Promise.all([getServers()]);
     } catch (error) {
       console.error("Erreur lors du rafraîchissement :", error);
     } finally {
@@ -208,6 +208,9 @@ const Index = () => {
         }
       );
       console.log(response.data);
+      setServers((prevServers) =>
+        prevServers.filter((server) => server.id !== id)
+      );
     } catch (error) {
       console.error("Erreur lors de la suppresion de l'élément", error);
     } finally {
@@ -292,14 +295,6 @@ const Index = () => {
         style={styles.deleteButton}
       >
         <Text style={styles.actionText}>Supprimer</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() =>
-          router.push({ pathname: "/Serveurs/[id]", params: { id } })
-        }
-        style={styles.editButton}
-      >
-        <Text style={styles.actionText}>Modifier</Text>
       </TouchableOpacity>
     </View>
   );
@@ -498,7 +493,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   deleteButton: {
-    backgroundColor: "red",
+    backgroundColor: "#323537",
     justifyContent: "center",
     alignItems: "center",
   },

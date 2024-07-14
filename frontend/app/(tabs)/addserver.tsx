@@ -244,27 +244,23 @@ const AddServer = () => {
           style={[styles.input, { width: "60%" }]}
         />
       </View>
-
-      <TextInput
-        mode="outlined"
-        label="Method"
-        value={formData.method}
-        activeOutlineColor="orange"
-        editable={false}
-        right={
-          <TextInput.Icon
-            icon={() => (
-              <AntDesign
-                name="caretdown"
-                size={20}
-                color="orange"
-                onPress={openMethodMenu}
-              />
-            )}
-          />
-        }
-        style={[styles.input, { width: "100%" }]}
-      />
+      <Pressable style={{ width: "100%" }} onPress={openMethodMenu}>
+        <TextInput
+          mode="outlined"
+          label="Method"
+          value={formData.method}
+          activeOutlineColor="orange"
+          editable={false}
+          right={
+            <TextInput.Icon
+              icon={() => (
+                <AntDesign name="caretdown" size={20} color="orange" />
+              )}
+            />
+          }
+          style={[styles.input, { width: "100%" }]}
+        />
+      </Pressable>
       <Portal>
         <Menu
           visible={methodMenuVisible}
@@ -432,93 +428,87 @@ const AddServer = () => {
         }
         style={[styles.input, { width: "100%" }]}
       />
-      <TextInput
-        mode="outlined"
-        label="Qualité du signal reseau minimum requise"
-        value={formData.qualite}
-        activeOutlineColor="orange"
-        editable={false}
-        right={
-          <TextInput.Icon
-            icon={() => (
-              <AntDesign
-                name="caretdown"
-                size={20}
-                color="orange"
-                onPress={openQualiteMenu}
-              />
-            )}
-          />
-        }
-        style={[styles.input, { width: "100%" }]}
-      />
+      <Pressable style={{ width: "100%" }} onPress={openQualiteMenu}>
+        <TextInput
+          mode="outlined"
+          label="Qualité du signal reseau minimum requise"
+          value={formData.qualite}
+          activeOutlineColor="orange"
+          editable={false}
+          right={
+            <TextInput.Icon
+              icon={() => (
+                <AntDesign name="caretdown" size={20} color="orange" />
+              )}
+            />
+          }
+          style={[styles.input, { width: "100%" }]}
+        />
+      </Pressable>
       <Portal>
         <Menu
           visible={qualiteMenuVisible}
           onDismiss={closeQualiteMenu}
-          anchor={{ x: 340, y: 339 }}
+          anchor={{ x: 340, y: 410 }}
           style={styles.menu}
         >
           <Menu.Item
-            onPress={() => handleQualiteChange("faible")}
+            onPress={() => handleQualiteChange("Faible")}
             title="Faible"
           />
           <Divider />
           <Menu.Item
-            onPress={() => handleQualiteChange("moyenne")}
+            onPress={() => handleQualiteChange("Moyenne")}
             title="Moyenne"
           />
           <Divider />
           <Menu.Item
-            onPress={() => handleQualiteChange("bonne")}
+            onPress={() => handleQualiteChange("Bonne")}
             title="Bonne"
           />
           <Divider />
           <Menu.Item
-            onPress={() => handleQualiteChange("excellente")}
+            onPress={() => handleQualiteChange("Excellente")}
             title="Excellente"
           />
           <Divider />
         </Menu>
       </Portal>
-      <TextInput
-        mode="outlined"
-        label="Mettre à jour via"
-        value={formData.update}
-        activeOutlineColor="orange"
-        editable={false}
-        right={
-          <TextInput.Icon
-            icon={() => (
-              <AntDesign
-                name="caretdown"
-                size={20}
-                color="orange"
-                onPress={openMajMenu}
-              />
-            )}
-          />
-        }
-        style={[styles.input, { width: "100%" }]}
-      />
+      <Pressable style={{ width: "100%" }} onPress={openMajMenu}>
+        <TextInput
+          mode="outlined"
+          label="Mettre à jour via"
+          value={formData.update}
+          activeOutlineColor="orange"
+          editable={false}
+          right={
+            <TextInput.Icon
+              icon={() => (
+                <AntDesign name="caretdown" size={20} color="orange" />
+              )}
+            />
+          }
+          style={[styles.input, { width: "100%" }]}
+        />
+      </Pressable>
       <Portal>
         <Menu
           visible={majMenuVisible}
           onDismiss={closeMajMenu}
-          anchor={{ x: 340, y: 339 }}
+          anchor={{ x: 340, y: 440 }}
           style={styles.menu}
         >
           <Menu.Item
-            onPress={() => handleMajChange("best")}
+            onPress={() => handleMajChange("Le meilleur réseau disponible")}
             title="Le meilleur réseau disponible"
           />
           <Divider />
           <Menu.Item
-            onPress={() => handleMajChange("mobile")}
+            onPress={() => handleMajChange("Réseau Mobile")}
             title="Réseau mobile"
           />
           <Divider />
-          <Menu.Item onPress={() => handleMajChange("wifi")} title="Wifi" />
+          <Menu.Item onPress={() => handleMajChange("Wifi")} title="Wifi" />
         </Menu>
       </Portal>
     </ScrollView>

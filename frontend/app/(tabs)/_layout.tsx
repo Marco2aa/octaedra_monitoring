@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Tabs } from "expo-router";
-import { View, Text, Platform, AppState, AppStateStatus } from "react-native";
+import {
+  View,
+  Text,
+  Platform,
+  AppState,
+  AppStateStatus,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/Colors";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -104,6 +111,22 @@ export default function Tablayout() {
       url_id = data.id;
       console.log(formData.chips);
 
+      Alert.alert(
+        "Succès",
+        `Url correctement ajoutée, vous allez être redirigé`
+      );
+
+      // Toujours appeler add-infourl, même si formData.chips est vide
+      try {
+        const responseThree = await axios.post(
+          `http://35.180.190.115:8000/add-infourl/${url_id}`
+        );
+        const data2 = responseThree.data;
+        console.log("url mis à jour après ajout d'une url spécifique", data2);
+      } catch (updateError) {
+        console.error("Erreur lors de la mise à jour de l'url", updateError);
+      }
+
       if (formData.chips && formData.chips.length > 0) {
         await Promise.all(
           formData.chips.map(async (chip) => {
@@ -122,25 +145,17 @@ export default function Tablayout() {
             }
           })
         );
-        try {
-          const responseThree = await axios.post(
-            "http://35.180.190.115:8000/add-all-infourl"
-          );
-          const data2 = responseThree.data;
-          console.log("url mis à jour après ajout d'une url spécifique", data2);
-        } catch (updateError) {
-          console.error("Erreur lors de la mise à jour de l'url", updateError);
-        }
       }
-      navigation.navigate("index");
     } catch (error) {
       console.error('Erreur lors de la création de l"url ', error);
+      Alert.alert("Erreur", `Erreur lors de la création de l'url : ${error}`);
     } finally {
       setTimeout(() => {
         navigation.navigate("index");
       }, 100);
     }
   };
+
   return (
     <>
       <Tabs
